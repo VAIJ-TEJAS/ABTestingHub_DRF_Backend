@@ -34,6 +34,8 @@ class Article(models.Model):
     content = RichTextField()
     published_date = models.DateTimeField(auto_now_add=True)
     related_articles = models.ManyToManyField('self', blank=True, related_name='related_similar_blogs')
+    popular_article = models.BooleanField(default=False)  
+    featured_article = models.BooleanField(default=False) 
 
     def __str__(self):
         return self.title

@@ -1,11 +1,11 @@
 from rest_framework import viewsets, permissions
 from .models import Article, Category
-from .serializers import BlogSerializer, CategorySerializer
+from .serializers import ArticleSerializer, CategorySerializer
 
 
 class BlogViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Article.objects.all()
-    serializer_class = BlogSerializer
+    serializer_class = ArticleSerializer
     permission_classes = [permissions.AllowAny]
 
 
