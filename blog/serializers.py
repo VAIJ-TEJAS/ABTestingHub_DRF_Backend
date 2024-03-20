@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Author, CoverImage, Category, Blog, ContentImage
+from .models import Author, CoverImage, Category, Article, ContentImage
 
 class AuthorSerializer(serializers.ModelSerializer):
     class Meta:
@@ -28,5 +28,5 @@ class BlogSerializer(serializers.ModelSerializer):
     content_images = ContentImageSerializer(many=True, read_only=True, source='contentimage_set')  # Assuming reverse relation name is 'contentimage_set'
 
     class Meta:
-        model = Blog
+        model = Article
         fields = ['id', 'author', 'cover_image', 'category', 'title', 'short_description', 'content', 'published_date', 'content_images', 'similar_blogs']
