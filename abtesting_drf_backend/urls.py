@@ -42,7 +42,7 @@ class FileView(APIView):
 
 router = DefaultRouter()
 router.register(r'signup', user_views.Signup)
-router.register(r'blogs', BlogViewSet)
+router.register(r'articles', BlogViewSet)
 router.register(r'categories', CategoryViewSet)
 router.register(r'tests', TestViewSet)
 
