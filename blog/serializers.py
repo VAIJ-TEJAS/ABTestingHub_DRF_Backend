@@ -26,7 +26,13 @@ class ContentImageSerializer(serializers.ModelSerializer):
         fields = ["id", "blog", "image"]
 
 
-class RelatedArticleSerializer(serializers.ModelSerializer):
+class PreviousNextArticleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Article
+        fields = ["id", "title"]
+
+
+class ArticleCardSerializer(serializers.ModelSerializer):
     author = AuthorSerializer(read_only=True)
     cover_image = CoverImageSerializer(read_only=True)
     category = CategorySerializer(read_only=True)
@@ -41,14 +47,8 @@ class RelatedArticleSerializer(serializers.ModelSerializer):
             "title",
             "short_description",
             "published_date",
-        ]
-
-class PreviousNextArticleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Article
-        fields = [
-            "id",
-            "title"
+            "popular_article",
+            "featured_article",
         ]
 
 
@@ -57,7 +57,7 @@ class ArticleSerializer(serializers.ModelSerializer):
     cover_image = CoverImageSerializer(read_only=True)
     category = CategorySerializer(read_only=True)
     content_images = ContentImageSerializer(many=True, read_only=True)
-    related_articles = RelatedArticleSerializer(many=True, read_only=True)
+    related_articles = ArticleCardSerializer(many=True, read_only=True)
     previous_article = PreviousNextArticleSerializer(read_only=True)
     next_article = PreviousNextArticleSerializer(read_only=True)
 

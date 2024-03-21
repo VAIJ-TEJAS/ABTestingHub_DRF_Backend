@@ -60,8 +60,8 @@ class Article(models.Model):
 
 class ContentImage(models.Model):
     name = models.CharField(max_length=255)
-    blog = models.ForeignKey(Article, on_delete=models.CASCADE)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
     image = models.ImageField(upload_to="content_images/")
 
     def __str__(self):
-        return f"Content Image {self.name} for Blog {self.blog.id}"
+        return f"Content Image {self.name} for Blog {self.article.id}"

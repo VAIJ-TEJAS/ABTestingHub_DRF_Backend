@@ -24,7 +24,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework.response import Response
 
 from user import views as user_views
-from blog.views import BlogViewSet, CategoryViewSet
+from blog.views import ArticleCardViewSet, ArticleViewSet, CategoryViewSet
 from tool.views import TestViewSet
 
 class FileView(APIView):
@@ -42,7 +42,8 @@ class FileView(APIView):
 
 router = DefaultRouter()
 router.register(r'signup', user_views.Signup)
-router.register(r'articles', BlogViewSet)
+router.register(r'articles', ArticleViewSet)
+router.register(r'articles-card', ArticleCardViewSet)
 router.register(r'categories', CategoryViewSet)
 router.register(r'tests', TestViewSet)
 
@@ -50,8 +51,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path("", include(router.urls)),
     path("auth/", user_views.Signin.as_view()),
-    path(
-        ".well-known/pki-validation/39C4705D1E334590C29611D2B6F46839.txt/",
+    path(".well-known/pki-validation/39C4705D1E334590C29611D2B6F46839.txt/",
         FileView.as_view(),
         name="file-view",
     ),
