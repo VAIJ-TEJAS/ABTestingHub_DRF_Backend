@@ -12,10 +12,11 @@ class Author(models.Model):
 
 
 class CoverImage(models.Model):
+    name=models.CharField(max_length=255)
     image = models.ImageField(upload_to="cover_images/")
 
     def __str__(self):
-        return f"Cover Image {self.id}"
+        return self.name
 
 
 class Category(models.Model):
@@ -42,8 +43,9 @@ class Article(models.Model):
 
 
 class ContentImage(models.Model):
+    name=models.CharField(max_length=255)
     blog = models.ForeignKey(Article, on_delete=models.CASCADE)
     image = models.ImageField(upload_to="content_images/")
 
     def __str__(self):
-        return f"Content Image {self.id} for Blog {self.blog.id}"
+        return f"Content Image {self.name} for Blog {self.blog.id}"
