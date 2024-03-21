@@ -60,9 +60,9 @@ class Test(models.Model):
     disclaimer_note = models.TextField(blank=True, null=True)
     statistically_significant = models.BooleanField(blank=True, null=True)
 
-    test_status = models.CharField(max_length=15, blank=True, null=True)
-    test_integrity = models.CharField(max_length=15, blank=True, null=True)
-    last_modified_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=15, blank=True, null=True)
+    integrity = models.CharField(max_length=15, blank=True, null=True)
+    modified_date = models.DateField(null=True, blank=True)
 
     def __str__(self):
         return self.name
