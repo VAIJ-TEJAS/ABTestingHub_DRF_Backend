@@ -43,15 +43,23 @@ class RelatedArticleSerializer(serializers.ModelSerializer):
             "published_date",
         ]
 
+class PreviousNextArticleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Article
+        fields = [
+            "id",
+            "title"
+        ]
+
 
 class ArticleSerializer(serializers.ModelSerializer):
     author = AuthorSerializer(read_only=True)
     cover_image = CoverImageSerializer(read_only=True)
     category = CategorySerializer(read_only=True)
-    content_images = ContentImageSerializer(
-        many=True, read_only=True, source="contentimage_set"
-    )
+    content_images = ContentImageSerializer(many=True, read_only=True)
     related_articles = RelatedArticleSerializer(many=True, read_only=True)
+    previous_article = PreviousNextArticleSerializer(read_only=True)
+    next_article = PreviousNextArticleSerializer(read_only=True)
 
     class Meta:
         model = Article
@@ -60,12 +68,14 @@ class ArticleSerializer(serializers.ModelSerializer):
             "author",
             "cover_image",
             "category",
-            "popular_article",
-            "featured_article",
             "title",
             "short_description",
             "content",
             "published_date",
-            "content_images",
             "related_articles",
+            "popular_article",
+            "featured_article",
+            "content_images",
+            "previous_article",
+            "next_article",
         ]
