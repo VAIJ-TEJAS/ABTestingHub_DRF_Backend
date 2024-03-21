@@ -17,14 +17,19 @@ from django.contrib import admin
 from django.conf import settings
 from django.urls import path, include
 from django.conf.urls.static import static
-from blog.views import BlogViewSet, CategoryViewSet
 from rest_framework.routers import DefaultRouter
+from user import views as user_views
+from blog.views import BlogViewSet, CategoryViewSet
+from tool.views import TestViewSet
 
 router = DefaultRouter()
+router.register(r'signup', user_views.Signup)
 router.register(r'blogs', BlogViewSet)
 router.register(r'categories', CategoryViewSet)
+router.register(r'tests', TestViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("", include(router.urls)),
+    path("auth/", user_views.Signin.as_view()),
 ]  + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
