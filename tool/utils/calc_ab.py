@@ -743,6 +743,8 @@ def analysis_function(
         "Test": test,
     }
 
+    fig_dict = {}
+
     if len(visitor_counts) == 2:
         fig = plot1(
             results,
