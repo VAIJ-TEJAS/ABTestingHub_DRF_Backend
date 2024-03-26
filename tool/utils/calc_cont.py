@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import json
 import plotly.graph_objects as go
+import plotly.io as pi
 
 
 def sample_size_cont(confidence_level, power, baseline_retention, mde, vari, variations, two_tailed, absolute):
@@ -42,7 +43,7 @@ def duration(sample_size, arms, daily_visitors, is_equal, allocations):
 def calculate_revenue(revenue_per_KPI, baseline, expected_uplift, abs, sample_size_per_arm):
     
     if revenue_per_KPI == None or expected_uplift == None:
-        return np.NaN, np.NaN, np.NaN
+        return None, None, None
     else:
         cntrl_revenue = revenue_per_KPI * baseline * sample_size_per_arm
         if abs:
@@ -135,7 +136,9 @@ def plot_c(df_alpha_adv, arms, factor, traffic):
     return fig1, fig2, fig3
 
 
-def cont_calculations(confidence_level: float, power: float, baseline_kpi: float, standard_deviation: float, mde: float, absolute: bool, arms: int, daily_interactions: int, two_tailed: bool, equal_allocation: bool, revenue_per_conversion:float, expected_uplift:float, allocations:dict = {}):
+def cont_calculations(confidence_level, power, baseline_kpi, standard_deviation, mde, absolute, arms, daily_interactions, two_tailed, equal_allocation, revenue_per_conversion, expected_uplift, allocations:dict = {}):
+
+    print(confidence_level, power, baseline_kpi, standard_deviation, mde, absolute, arms, daily_interactions, two_tailed, equal_allocation, revenue_per_conversion, expected_uplift, allocations)
 
     # Lists created for the graph
     alpha_list = np.linspace(0.1, 0.01, 40)
@@ -181,19 +184,14 @@ def cont_calculations(confidence_level: float, power: float, baseline_kpi: float
     ########################################################################
     # DEVELOPERS CODE ! DO NO CHANGE THIS AT ANY COST ! ELSE THINGS GO WRONG 
     # Convert Plotly figures to JSON strings
-    fig1_json = plotly.io.to_json(fig1)
-    fig2_json = plotly.io.to_json(fig2)
-    fig3_json = plotly.io.to_json(fig3)
+    fig1_json = pi.to_json(fig1)
+    fig2_json = pi.to_json(fig2)
+    fig3_json = pi.to_json(fig3)
     
     # Parse JSON strings back into Python dictionaries
     fig1_dict = json.loads(fig1_json)
     fig2_dict = json.loads(fig2_json)
     fig3_dict = json.loads(fig3_json)
-    
-    # Use the dictionaries in the final response
-    final_dictionary["Fig Confidence Level"] = fig1_dict
-    final_dictionary["Fig Power"] = fig2_dict
-    final_dictionary["Fig MDE"] = fig3_dict
     ########################################################################
     ########################################################################
     ########################################################################
@@ -219,6 +217,7 @@ def cont_calculations(confidence_level: float, power: float, baseline_kpi: float
 
     return final_dictionary
 
+    
 
 """
 1. Input Ranges:

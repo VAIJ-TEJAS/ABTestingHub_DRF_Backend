@@ -2,7 +2,9 @@ import scipy.stats as stats
 import pandas as pd
 import math
 import numpy as np
+import json
 import plotly.graph_objects as go
+import plotly.io as pi
 
 def get_sample_size(confidence_level, power, baseline_val, mde, variations, absolute, two_tailed):
     alpha = 1-(confidence_level/100)
@@ -124,7 +126,7 @@ def plot_p(df_alpha_adv, arms, factor, traffic):
 def calculate_revenue(revenue_per_KPI, baseline, expected_uplift, abs, sample_size_per_arm):
     
     if revenue_per_KPI == None or expected_uplift == None:
-        return np.NaN, np.NaN, np.NaN
+        return None, None, None
     else:
         cntrl_revenue = revenue_per_KPI * baseline * sample_size_per_arm
         if abs:
@@ -138,7 +140,7 @@ def calculate_revenue(revenue_per_KPI, baseline, expected_uplift, abs, sample_si
         return round(cntrl_revenue, 2), round(expt_revenue, 2), perct_increase
 
 
-def prop_calculations(confidence_level: float, power: float, baseline_cr: float, mde: float, absolute: bool, arms: int, daily_interactions: int, two_tailed: bool, equal_allocation: bool, revenue_per_conversion:float, expected_uplift:float, allocations:dict = {}):
+def prop_calculations(confidence_level, power, baseline_cr, mde, absolute, arms, daily_interactions, two_tailed, equal_allocation, revenue_per_conversion, expected_uplift, allocations:dict = {}):
     # Lists created for the graph
     alpha_list = np.linspace(0.1, 0.01, 40)
     confidence_list = np.linspace(90, 99, 40)
@@ -178,6 +180,23 @@ def prop_calculations(confidence_level: float, power: float, baseline_cr: float,
     
     fig1, fig2, fig3 = plot_p(df_alpha_adv, arms,  min(alloc_percentages)/100, daily_interactions)
 
+    ########################################################################
+    ########################################################################
+    ########################################################################
+    # DEVELOPERS CODE ! DO NO CHANGE THIS AT ANY COST ! ELSE THINGS GO WRONG 
+    # Convert Plotly figures to JSON strings
+    fig1_json = pi.to_json(fig1)
+    fig2_json = pi.to_json(fig2)
+    fig3_json = pi.to_json(fig3)
+    
+    # Parse JSON strings back into Python dictionaries
+    fig1_dict = json.loads(fig1_json)
+    fig2_dict = json.loads(fig2_json)
+    fig3_dict = json.loads(fig3_json)
+    ########################################################################
+    ########################################################################
+    ########################################################################
+
     # Updating the values in the final dictionary to be returned as the output for this function
     final_dictionary = {}
     final_dictionary["Total Sample Size"] = total_sample_size
@@ -189,11 +208,18 @@ def prop_calculations(confidence_level: float, power: float, baseline_cr: float,
     final_dictionary["Fig Confidence Level"] = fig1
     final_dictionary["Fig Power"] = fig2
     final_dictionary["Fig MDE"] = fig3
+    ########################################################################
+    ########################################################################
+    ########################################################################
+    # DEVELOPERS CODE ! DO NO CHANGE THIS AT ANY COST ! ELSE THINGS GO WRONG
+    final_dictionary["Fig Confidence Level"] = fig1_dict
+    final_dictionary["Fig Power"] = fig2_dict
+    final_dictionary["Fig MDE"] = fig3_dict
+    ########################################################################
+    ########################################################################
+    ########################################################################
 
     return final_dictionary
-
-
-print(prop_calculations(95, 80, 10, 3, True, 2,100, True, True, 0.25, 3, {}))
 
 
 """
