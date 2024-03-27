@@ -572,8 +572,7 @@ def generate_conclusion(results, confidence_level, tail):
             )
             conclusion += "\nFurther investigation or a larger data may be needed for reliable insights. \n"
             return (
-                "### Conclusion: \n"
-                + "##### The test results are :red[statistically insignificant]."
+                " The test results are :red[statistically insignificant]."
                 + conclusion
                 + "\n"
                 + results["Test"]
@@ -588,8 +587,7 @@ def generate_conclusion(results, confidence_level, tail):
             )
             conclusion += "\nFurther investigation or a larger data may be needed for reliable insights. \n"
             return (
-                "### Conclusion: \n"
-                + "##### The test results are :red[statistically insignificant]."
+                + "The test results are :red[statistically insignificant]."
                 + conclusion
                 + "\n"
                 + results["Test"]
@@ -631,8 +629,7 @@ def generate_conclusion_mvt(
         conclusion += "\nNone of the treatment groups showed a significant absolute increase or decrease over the control group(A), i.e, have a big enough change for it be conclusive enough to make a decision. \n"
         conclusion += "\nFurther investigation or a larger data may be needed for reliable insights.\n"
         return (
-            "### Conclusion: \n"
-            + "##### The test results are :red[statistically insignificant]."
+            "The test results are :red[statistically insignificant]."
             + conclusion
             + "\n"
             + results["Test"]
@@ -652,8 +649,7 @@ def generate_conclusion_mvt(
         )
         conclusion += f"\nThis suggests that group {max_uplift} is the more effective strategy for increasing conversions.\n"
         return (
-            "### Conclusion: \n"
-            + "##### The test results are :green[statistically significant]."
+            "The test results are :green[statistically significant]."
             + conclusion
             + "\n"
             + results["Test"]
