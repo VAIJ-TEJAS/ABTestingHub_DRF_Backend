@@ -5,13 +5,12 @@ from django.db import models
 class Test(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     name = models.CharField(max_length=255)
+    no_of_arms = models.IntegerField()
+    proportional_metric = models.BooleanField()
     description = models.TextField(blank=True, null=True)
     hypothesis = models.TextField(blank=True, null=True)
     primary_metric = models.CharField(max_length=255, blank=True, null=True)
     business_target = models.CharField(max_length=255, blank=True, null=True)
-    no_of_arms = models.IntegerField(blank=True, null=True)
-    proportional_metric = models.BooleanField(blank=True, null=True)
-    start_date = models.DateField(blank=True, null=True)
 
     confidence_level = models.FloatField(blank=True, null=True)
     power = models.FloatField(blank=True, null=True)
@@ -62,7 +61,8 @@ class Test(models.Model):
 
     status = models.CharField(max_length=15, blank=True, null=True)
     integrity = models.CharField(max_length=15, blank=True, null=True)
-    modified_date = models.DateField(null=True, blank=True)
+    created_date = models.DateField(auto_now_add=True)
+    modified_date = models.DateField(auto_now_add=True)
 
     def __str__(self):
         return self.name
