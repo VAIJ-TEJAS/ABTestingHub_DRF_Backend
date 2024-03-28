@@ -534,8 +534,7 @@ def generate_conclusion(results, confidence_level, tail):
             )
             conclusion += "\nThis suggests that group B is the more effective strategy for increasing conversions. \n"
             return (
-                "### Conclusion: \n"
-                + "##### The test results are :green[statistically significant]."
+                "The test results are :green[statistically significant]."
                 + conclusion
                 + "\n"
                 + results["Test"]
@@ -554,8 +553,7 @@ def generate_conclusion(results, confidence_level, tail):
             )
             conclusion += "\nThis suggests that group B is not an effective strategy for increasing conversions. \n"
             return (
-                "### Conclusion: \n"
-                + "##### The test results are :green[statistically significant]."
+                "The test results are :green[statistically significant]."
                 + conclusion
                 + "\n"
                 + results["Test"]
@@ -784,8 +782,6 @@ def analysis_function(
         "conclusion": conclusion,
         "figure": fig_dict,
     }
-
-    print(data_as_response)
 
     return data_as_response
 
