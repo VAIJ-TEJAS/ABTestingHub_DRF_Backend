@@ -19,7 +19,12 @@ class Signup(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         user = User.objects.create_user(**serializer.validated_data)
         token = Token.objects.create(user=user)
-        return Response({"token": token.key, "user": str(token.user)})
+
+        # Serialize the user object
+        user_serializer = UserSerializer(token.user)
+        serialized_user = user_serializer.data
+
+        return Response({"token": token.key, "user": serialized_user})
 
 
 class Signin(ObtainAuthToken):

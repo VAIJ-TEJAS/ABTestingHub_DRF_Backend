@@ -6,14 +6,18 @@ from tool.utils.calc_cont import cont_calculations
 from tool.utils.calc_prop import prop_calculations
 from .models import Test
 from .serializers import TestSerializer
-import numpy as np
 
 class TestViewSet(viewsets.ModelViewSet):
     queryset = Test.objects.all()
     serializer_class = TestSerializer
-    permission_classes = [permissions.AllowAny]
+    
+    def get_queryset(self):
+        return Test.objects.filter(user=self.request.user).order_by('-created_date')
+    
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
-    @action(detail=False, methods=["post"])
+    @action(detail=False, methods=["post"], permission_classes=[permissions.AllowAny])
     def calc_continuous_metric(self, request):
         # Extracting payload from request
         payload = request.data
@@ -52,7 +56,7 @@ class TestViewSet(viewsets.ModelViewSet):
         # Return results
         return Response(results, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=["post"])
+    @action(detail=False, methods=["post"], permission_classes=[permissions.AllowAny])
     def calc_proportional_metric(self, request):
         # Extracting payload from request
         payload = request.data
@@ -60,12 +64,12 @@ class TestViewSet(viewsets.ModelViewSet):
         try:
             confidence_level = float(payload.get('confidence_level'))
             power = float(payload.get('power'))
-            baseline_cr = float(payload.get('baseline_cr'))
+            baseline_cr = float(payload.get('baseline_conversion_rate'))
             mde = float(payload.get('mde'))
             absolute = payload.get('absolute', True) in [True, 'true', 'True', 1, '1']
             arms = int(payload.get('arms'))
             daily_interactions = int(payload.get('daily_interactions'))
-            two_tailed = payload.get('two_tailed', True) in [True, 'true', 'True', 1, '1']
+            two_tailed = payload.get('two_tailed_test', True) in [True, 'true', 'True', 1, '1']
             equal_allocation = payload.get('equal_allocation', True) in [True, 'true', 'True', 1, '1']
             revenue_per_conversion = payload.get('revenue_per_conversion')
             expected_uplift = payload.get('expected_uplift')
@@ -88,7 +92,7 @@ class TestViewSet(viewsets.ModelViewSet):
         # Return results
         return Response(results, status=status.HTTP_200_OK)
     
-    @action(detail=False, methods=["post"])
+    @action(detail=False, methods=["post"], permission_classes=[permissions.AllowAny])
     def calc_ab_metric(self, request):
         payload = request.data
         try:
@@ -105,3 +109,4 @@ class TestViewSet(viewsets.ModelViewSet):
             return Response(results, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": "Error processing request", "message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
