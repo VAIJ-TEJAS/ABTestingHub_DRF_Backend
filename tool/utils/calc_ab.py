@@ -761,6 +761,8 @@ def analysis_function(
             results, diff_in_cr, pvalues, alpha_level, two_tail
         )
 
+    print(conclusion)
+
     data_as_response = {
         "arms": len(visitor_counts),
         "conversion-rates": [
@@ -770,6 +772,8 @@ def analysis_function(
         "difference-conversion-rates": [
             {"arm": i + 2, "value": diff_in_cr[i] * 100} for i in range(len(diff_in_cr))
         ],
+        "max_uplift": max(uplifts) * 100,
+        "statistically_significant": True if "significant" in conclusion else False,
         "relative-uplift-values": [
             {"arm": i + 2, "value": uplifts[i] * 100} for i in range(len(uplifts))
         ],

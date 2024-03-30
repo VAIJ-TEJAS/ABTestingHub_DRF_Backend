@@ -1,6 +1,7 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.filters import SearchFilter
 from tool.utils.calc_ab import analysis_function
 from tool.utils.calc_cont import cont_calculations
 from tool.utils.calc_prop import prop_calculations
@@ -10,6 +11,8 @@ from .serializers import TestSerializer
 class TestViewSet(viewsets.ModelViewSet):
     queryset = Test.objects.all()
     serializer_class = TestSerializer
+    filter_backends = [SearchFilter]
+    search_fields = ['name', 'description']
     
     def get_queryset(self):
         return Test.objects.filter(user=self.request.user).order_by('-created_date')
@@ -26,7 +29,7 @@ class TestViewSet(viewsets.ModelViewSet):
             confidence_level = float(payload.get('confidence_level'))
             power = float(payload.get('power'))
             baseline_kpi = float(payload.get('baseline_kpi'))
-            standard_deviation = float(payload.get('standard_deviation'))
+            standard_deviation = float(payload.get('kpi_sd'))
             mde = float(payload.get('mde'))
             absolute = payload.get('absolute', True) in [True, 'true', 'True', 1, '1']
             arms = int(payload.get('arms'))
@@ -73,7 +76,7 @@ class TestViewSet(viewsets.ModelViewSet):
             equal_allocation = payload.get('equal_allocation', True) in [True, 'true', 'True', 1, '1']
             revenue_per_conversion = payload.get('revenue_per_conversion')
             expected_uplift = payload.get('expected_uplift')
-            allocations = payload.get('allocations', {})
+            allocations = payload.get('allocations', [])
 
         except ValueError as e:
             return Response({"error": "Invalid input types", "message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
