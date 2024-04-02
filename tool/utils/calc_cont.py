@@ -45,6 +45,9 @@ def calculate_revenue(revenue_per_KPI, baseline, expected_uplift, abs, sample_si
     if revenue_per_KPI == None or expected_uplift == None:
         return None, None, None
     else:
+        
+        expected_uplift = expected_uplift/100
+    
         cntrl_revenue = revenue_per_KPI * baseline * sample_size_per_arm
         if abs:
             test_kpi_value = baseline + expected_uplift
@@ -137,7 +140,6 @@ def plot_c(df_alpha_adv, arms, factor, traffic):
 
 
 def cont_calculations(confidence_level, power, baseline_kpi, standard_deviation, mde, absolute, arms, daily_interactions, two_tailed, equal_allocation, revenue_per_conversion, expected_uplift, allocations:dict = {}):
-
     print(confidence_level, power, baseline_kpi, standard_deviation, mde, absolute, arms, daily_interactions, two_tailed, equal_allocation, revenue_per_conversion, expected_uplift, allocations)
 
     # Lists created for the graph
@@ -149,7 +151,7 @@ def cont_calculations(confidence_level, power, baseline_kpi, standard_deviation,
     # Computations for graphs
     alpha_adv = [arms*sample_size_cont(100*(1-x), power,baseline_kpi, mde,standard_deviation,arms,two_tailed,absolute) for x in alpha_list]
     power_adv = [arms*sample_size_cont(confidence_level, 100*(1-x),baseline_kpi, mde,standard_deviation,arms,two_tailed, absolute) for x in beta_list]
-    MDE_adv = [arms*sample_size_cont(confidence_level, power,baseline_kpi, x,standard_deviation,arms,two_tailed,absolute) for x in mde_list]
+    MDE_adv = [arms*sample_size_cont(confidence_level, power,baseline_kpi, 100*x,standard_deviation,arms,two_tailed,absolute) for x in mde_list]
 
     # Allocation percentages in case of unequal traffic allocations (if equal, then create an array with equal percentage values)
     alloc_percentages = []

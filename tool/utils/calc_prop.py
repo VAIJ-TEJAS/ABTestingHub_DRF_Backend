@@ -124,10 +124,14 @@ def plot_p(df_alpha_adv, arms, factor, traffic):
 
 
 def calculate_revenue(revenue_per_KPI, baseline, expected_uplift, abs, sample_size_per_arm):
+
     
     if revenue_per_KPI == None or expected_uplift == None:
         return None, None, None
     else:
+        baseline = baseline/100
+        expected_uplift = expected_uplift/100
+
         cntrl_revenue = revenue_per_KPI * baseline * sample_size_per_arm
         if abs:
             test_kpi_value = baseline + expected_uplift
@@ -141,6 +145,7 @@ def calculate_revenue(revenue_per_KPI, baseline, expected_uplift, abs, sample_si
 
 
 def prop_calculations(confidence_level, power, baseline_cr, mde, absolute, arms, daily_interactions, two_tailed, equal_allocation, revenue_per_conversion, expected_uplift, allocations:dict = {}):
+    
     # Lists created for the graph
     alpha_list = np.linspace(0.1, 0.01, 40)
     confidence_list = np.linspace(90, 99, 40)
@@ -150,7 +155,7 @@ def prop_calculations(confidence_level, power, baseline_cr, mde, absolute, arms,
     # Computations for graphs
     alpha_adv = [arms*get_sample_size(confidence_level = 100*(1-x), power=power,baseline_val=baseline_cr,variations=arms,mde=mde,absolute=absolute,two_tailed=two_tailed) for x in alpha_list]
     power_adv = [arms*get_sample_size(confidence_level = confidence_level,power=100*(1-x),baseline_val=baseline_cr,variations=arms,mde=mde,absolute=absolute,two_tailed=two_tailed) for x in beta_list]
-    MDE_adv = [arms*get_sample_size(confidence_level = confidence_level,power=power,baseline_val=baseline_cr,variations=arms,mde=x,absolute=absolute,two_tailed=two_tailed) for x in mde_list]
+    MDE_adv = [arms*get_sample_size(confidence_level = confidence_level,power=power,baseline_val=baseline_cr,variations=arms,mde=100*x,absolute=absolute,two_tailed=two_tailed) for x in mde_list]
 
     # Allocation percentages in case of unequal traffic allocations (if equal, then create an array with equal percentage values)
     alloc_percentages = []
@@ -205,9 +210,6 @@ def prop_calculations(confidence_level, power, baseline_cr, mde, absolute, arms,
     final_dictionary["Weeks Required"] = weeks_required
     final_dictionary["Control Revenue"] = revenue_impact_cntrl
     final_dictionary["Test Revenue"] = revenue_impact_expt
-    final_dictionary["Fig Confidence Level"] = fig1
-    final_dictionary["Fig Power"] = fig2
-    final_dictionary["Fig MDE"] = fig3
     ########################################################################
     ########################################################################
     ########################################################################
