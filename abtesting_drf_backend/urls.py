@@ -23,6 +23,7 @@ from rest_framework.views import APIView
 from rest_framework.routers import DefaultRouter
 from rest_framework.response import Response
 
+from analytics.views import AnswerViewSet, QuestionViewSet
 from user import views as user_views
 from blog.views import ArticleCardViewSet, ArticleViewSet, CategoryViewSet
 from tool.views import TestViewSet
@@ -46,6 +47,8 @@ router.register(r'articles', ArticleViewSet)
 router.register(r'articles-card', ArticleCardViewSet)
 router.register(r'categories', CategoryViewSet)
 router.register(r'tests', TestViewSet)
+router.register(r'questions', QuestionViewSet)
+router.register(r'answers', AnswerViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),

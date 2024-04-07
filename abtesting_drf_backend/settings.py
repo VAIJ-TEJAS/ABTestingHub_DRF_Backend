@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "ckeditor",
 
     "user",
+    "analytics",
     "blog",
     "tool"
 ]
