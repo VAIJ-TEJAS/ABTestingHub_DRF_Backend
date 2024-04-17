@@ -1,18 +1,3 @@
-"""abtesting_drf_backend URL Configuration
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/3.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 import os
 from django.contrib import admin
 from django.conf import settings
@@ -43,19 +28,21 @@ class FileView(APIView):
 
 router = DefaultRouter()
 router.register(r'signup', user_views.Signup)
-router.register(r'articles', ArticleViewSet)
-router.register(r'articles-card', ArticleCardViewSet)
+router.register(r'articles', ArticleViewSet, basename='articles')
+router.register(r'articles-card', ArticleCardViewSet, basename='articles-card')
 router.register(r'categories', CategoryViewSet)
 router.register(r'tests', TestViewSet)
 router.register(r'questions', QuestionViewSet)
 router.register(r'answers', AnswerViewSet)
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path("", include(router.urls)),
+    path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     path("auth/", user_views.Signin.as_view()),
+     path('google-complete/', user_views.google_complete, name='google-complete'),
+    path('admin/', admin.site.urls),
     path(".well-known/pki-validation/39C4705D1E334590C29611D2B6F46839.txt/",
         FileView.as_view(),
         name="file-view",
     ),
+    path("", include(router.urls)),
 ]  + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
