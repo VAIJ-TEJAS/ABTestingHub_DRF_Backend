@@ -1,14 +1,13 @@
 from django.contrib.auth.models import User
 from django.shortcuts import redirect
-from oauth2_provider.models import AccessToken
 from django.contrib.auth import get_user_model, login
-from django.utils import timezone
 import requests
 from rest_framework import viewsets
 from rest_framework.permissions import AllowAny
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
+from rest_framework.decorators import api_view, permission_classes
 from .serializers import UserSerializer
 
 
@@ -44,6 +43,8 @@ class Signin(ObtainAuthToken):
         return Response({"token": token.key, "user": serialized_user})
 
 
+@api_view(['POST'])
+@permission_classes([AllowAny])
 def google_complete(request):
     client_id = "your-client-id.apps.googleusercontent.com"
     client_secret = "your-client-secret"
