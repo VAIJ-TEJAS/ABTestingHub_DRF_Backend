@@ -67,6 +67,8 @@ def google_complete(request):
         headers={'Authorization': f'Bearer {access_token}'}
     ).json()
 
+    print(user_info)
+
     User = get_user_model()
     # Try to retrieve the user by their email
     try:
