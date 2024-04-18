@@ -36,9 +36,9 @@ router.register(r'questions', QuestionViewSet)
 router.register(r'answers', AnswerViewSet)
 
 urlpatterns = [
-    path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
+    # path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     path("auth/", user_views.Signin.as_view()),
-     path('google-complete/', user_views.google_complete, name='google-complete'),
+    path('google-complete/', user_views.google_complete, name='google-complete'),
     path('admin/', admin.site.urls),
     path(".well-known/pki-validation/39C4705D1E334590C29611D2B6F46839.txt/",
         FileView.as_view(),

@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "sslserver",
     "ckeditor",
-    'oauth2_provider',
+    # 'oauth2_provider',
 
     "user",
     "analytics",
@@ -136,11 +136,11 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-# OAuth2 provider settings
-OAUTH2_PROVIDER = {
-    'SCOPES': {'read': 'Read scope', 'write': 'Write scope', 'groups': 'Access to your groups'},
-    'ACCESS_TOKEN_EXPIRE_SECONDS': 86400,  # 1 day
-}
+# # OAuth2 provider settings
+# OAUTH2_PROVIDER = {
+#     'SCOPES': {'read': 'Read scope', 'write': 'Write scope', 'groups': 'Access to your groups'},
+#     'ACCESS_TOKEN_EXPIRE_SECONDS': 86400,  # 1 day
+# }
 
 
 REST_FRAMEWORK = {
