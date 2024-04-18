@@ -61,6 +61,9 @@ def google_complete(request):
     token_data = r.json()
 
     access_token = token_data.get("access_token")
+
+    print(access_token)
+
     # Fetch user details from Google's userinfo endpoint
     user_info = requests.get(
         'https://www.googleapis.com/oauth2/v3/userinfo',
