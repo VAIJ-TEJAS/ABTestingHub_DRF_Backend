@@ -48,9 +48,13 @@ class Signin(ObtainAuthToken):
 def google_complete(request):
     client_id = "536694079392-l8fshhc5500re28bk2dk82i9k14h14l6.apps.googleusercontent.com"
     client_secret = "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"
-    code = request.GET.get("code")
+    code = request.data.get("code")  
 
     print(code)
+
+    if not code:
+        print("Authorization code is missing")
+        return Response({"error": "Authorization code is missing"}, status=400)
 
     url = "https://oauth2.googleapis.com/token"
     data = {
