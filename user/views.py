@@ -81,7 +81,12 @@ def google_complete(request):
 
         # Create a token for your DRF TokenAuthentication
         token, created = Token.objects.get_or_create(user=user)
-        return redirect(f"http://localhost:5173/?token={token.key}")
+        
+        # Serialize the user object
+        user_serializer = UserSerializer(token.user)
+        serialized_user = user_serializer.data
+        
+        return Response({"token": token.key, "user": serialized_user})
         
     except ValueError:
         # Invalid token
