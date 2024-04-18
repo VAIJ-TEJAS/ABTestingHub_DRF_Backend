@@ -1,7 +1,6 @@
 from django.contrib.auth.models import User
 from django.shortcuts import redirect
 from django.contrib.auth import get_user_model, login
-import requests
 from rest_framework import viewsets
 from rest_framework.permissions import AllowAny
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -9,6 +8,8 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
 from .serializers import UserSerializer
+from google.oauth2 import id_token
+from google.auth.transport import requests
 
 
 class Signup(viewsets.ModelViewSet):
@@ -47,56 +48,42 @@ class Signin(ObtainAuthToken):
 @permission_classes([AllowAny])
 def google_complete(request):
     client_id = "536694079392-l8fshhc5500re28bk2dk82i9k14h14l6.apps.googleusercontent.com"
-    client_secret = "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"
-    code = request.data.get("code")  
+    # client_secret = "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"
 
-    print(code)
+    token = request.data.get("token")
+    
+    if not token:
+        print("Token is missing")
+        return Response({"error": "Token is missing"}, status=400)
 
-    if not code:
-        print("Authorization code is missing")
-        return Response({"error": "Authorization code is missing"}, status=400)
-
-    url = "https://oauth2.googleapis.com/token"
-    data = {
-        "code": code,
-        "client_id": client_id,
-        "client_secret": client_secret,
-        "redirect_uri": "your-backend-redirect-uri",
-        "grant_type": "authorization_code",
-    }
-    r = requests.post(url, data=data)
-    token_data = r.json()
-
-    access_token = token_data.get("access_token")
-
-    print(access_token)
-
-    # Fetch user details from Google's userinfo endpoint
-    user_info = requests.get(
-        'https://www.googleapis.com/oauth2/v3/userinfo',
-        headers={'Authorization': f'Bearer {access_token}'}
-    ).json()
-
-    print(user_info)
-
-    User = get_user_model()
-    # Try to retrieve the user by their email
+    # Validate the token and get user info
     try:
-        user = User.objects.get(email=user_info['email'])
-    except User.DoesNotExist:
-        # Create a new user if does not exist
-        user = User.objects.create(
-            username=user_info['email'],
-            email=user_info['email'],
-            first_name=user_info.get('given_name', ''),
-            last_name=user_info.get('family_name', '')
+        idinfo = id_token.verify_oauth2_token(token, requests.Request(), client_id)
+        
+        # idinfo['sub'] is user's Google ID
+        email = idinfo['email']
+        first_name = idinfo.get('given_name', '')
+        last_name = idinfo.get('family_name', '')
+        
+        User = get_user_model()
+        # Try to retrieve the user by their email
+        user, created = User.objects.get_or_create(
+            username=email,
+            defaults={'email': email, 'first_name': first_name, 'last_name': last_name}
         )
-        user.set_unusable_password()  # Important if password login isn't meant to be used
-        user.save()
+        
+        if created:
+            user.set_unusable_password()  # Important if password login isn't meant to be used
+            user.save()
 
-    # Authenticate session
-    login(request, user)
+        # Authenticate session
+        login(request, user)
 
-    # Create a token for your DRF TokenAuthentication
-    token, created = Token.objects.get_or_create(user=user)
-    return redirect(f"http://localhost:5173/?token={token.key}")
+        # Create a token for your DRF TokenAuthentication
+        token, created = Token.objects.get_or_create(user=user)
+        return redirect(f"http://localhost:5173/?token={token.key}")
+        
+    except ValueError:
+        # Invalid token
+        print("Invalid token")
+        return Response({"error": "Invalid token"}, status=400)
