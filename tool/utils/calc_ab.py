@@ -494,10 +494,12 @@ def plot1(results, visitors_a, visitors_b, conv_a, conv_b, confidence_level, tai
     fig.update_layout(xaxis_tickformat=".1%")
     # Add x and y labels and title
     fig.update_layout(
+        autosize=True,
         xaxis_title="Conversion Rate (%)",
         yaxis_title="Probability Density Function",
-        width=1200,
-        height=700,
+        # width=1200,
+        # height=700,
+        # responsive=True
     )
     # Legend layout and size
     fig.update_layout(
