@@ -20,7 +20,7 @@ class Test(models.Model):
     mde = models.FloatField(blank=True, null=True)
     daily_interactions = models.IntegerField(blank=True, null=True)
     absolute = models.BooleanField(blank=True, null=True)
-    equal_allocation = models.BooleanField(blank=True, null=True)
+    equal_allocation = models.BooleanField(blank=True, null=True, default=True)
     two_tailed_test = models.BooleanField(blank=True, null=True)
     expected_uplift = models.FloatField(blank=True, null=True)
     revenue_per_conversion = models.FloatField(blank=True, null=True)

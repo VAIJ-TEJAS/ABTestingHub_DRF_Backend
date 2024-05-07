@@ -517,146 +517,76 @@ def plot1(results, visitors_a, visitors_b, conv_a, conv_b, confidence_level, tai
 
 
 def generate_conclusion(results, confidence_level, tail):
-    conclusion = ""
+    conclusions = []
     alpha = confidence_level
-    absolute = results["Conversion Rate B"] * 100 - results["Conversion Rate A"] * 100
-    abs = round(absolute, 2)
+    absolute = results['Conversion Rate B']*100 - results['Conversion Rate A']*100
+    abs_value = round(absolute, 2)
     level = (1 - alpha) * 100
-    # Statistically significant
-    if results["P-Value"] < alpha:
-        if results["Conversion Rate A"] < results["Conversion Rate B"]:
-            conclusion += (
-                "\nThe treatment group(B) showed a "
-                + str(abs)
-                + "% absolute uplift over control group(A). \n"
-            )
-            conclusion += (
-                str(level)
-                + "% of the time, the outcome is due to the changes and not due to random chance. \n"
-            )
-            conclusion += "\nThis suggests that group B is the more effective strategy for increasing conversions. \n"
-            return (
-                "The test results are :green[statistically significant]."
-                + conclusion
-                + "\n"
-                + results["Test"]
-                + "\n"
-            )
 
-        if results["Conversion Rate A"] > results["Conversion Rate B"]:
-            conclusion += (
-                "\nThe treatment group(B) showed a "
-                + str(abs)
-                + "% absolute decrease over control group(A). \n"
-            )
-            conclusion += (
-                str(level)
-                + "% of the time, the outcome is due to the changes and not due to random chance. \n"
-            )
-            conclusion += "\nThis suggests that group B is not an effective strategy for increasing conversions. \n"
-            return (
-                "The test results are :green[statistically significant]."
-                + conclusion
-                + "\n"
-                + results["Test"]
-                + "\n"
-            )
+    # Determine the significance and direction of the result
+    if results['P-Value'] < alpha:
+        status = "significant"
+        if results['Conversion Rate A'] < results['Conversion Rate B']:
+            conclusions.append({"text": f"The treatment group (B) showed a {abs_value}% absolute uplift over control group (A). {level}% of the time, the outcome is due to the changes and not due to random chance. This suggests that group B is the more effective strategy for increasing conversions.", "className": ''})
+        elif results['Conversion Rate A'] > results['Conversion Rate B']:
+            conclusions.append({"text": f"The treatment group (B) showed a {abs_value}% absolute decrease over control group (A). {level}% of the time, the outcome is due to the changes and not due to random chance. This suggests that group B is not an effective strategy for increasing conversions.", "className": ''})
 
-    # Statistically insignificant
     else:
-        if results["Conversion Rate A"] < results["Conversion Rate B"]:
-            conclusion += (
-                "\nDespite treatment group(B) showing a "
-                + str(abs)
-                + "% absolute uplift over control group(A), it is not conclusive enough to make a decision.\n"
-            )
-            conclusion += "\nFurther investigation or a larger data may be needed for reliable insights. \n"
-            return (
-                " The test results are :red[statistically insignificant]."
-                + conclusion
-                + "\n"
-                + results["Test"]
-                + "\n"
-            )
+        status = "insignificant"
+        if results['Conversion Rate A'] < results['Conversion Rate B']:
+            conclusions.append({"text": f"Despite treatment group (B) showing a {abs_value}% absolute uplift over control group (A), it is not conclusive enough to make a decision. Further investigation or a larger data set may be needed for reliable insights.", "className": ''})
+        elif results['Conversion Rate A'] > results['Conversion Rate B']:
+            conclusions.append({"text": f"Though the treatment group (B) showed a {abs_value}% absolute decrease over control group (A), it is not conclusive enough to make a decision. Further investigation or a larger data set may be needed for reliable insights.", "className": ''})
 
-        if results["Conversion Rate A"] > results["Conversion Rate B"]:
-            conclusion += (
-                "\nThough the treatment group(B) showed a "
-                + str(abs)
-                + "% absolute decrease over control group(A), it is not conclusive enough to make a decision. \n"
-            )
-            conclusion += "\nFurther investigation or a larger data may be needed for reliable insights. \n"
-            return (
-                + "The test results are :red[statistically insignificant]."
-                + conclusion
-                + "\n"
-                + results["Test"]
-                + "\n"
-            )
+    # Add test type and significance to conclusions
+    conclusions.insert(0, {"text": f"The test results are statistically", "className": ''})
+    conclusions.append({"text": "", "className": "text-white"})
+    conclusions.append({"text": results['Test'], "className": "font-bold"})
+
+    return conclusions, status
 
 
-def generate_conclusion_mvt(
-    results: dict, diff_in_cr: list, pvalues: list, alpha_level, tail
-):
-    conclusion = ""
-    diff_in_cr = diff_in_cr
+def generate_conclusion_mvt(results: dict, diff_in_cr: list, pvalues: list, alpha_level: float, tail: str):
+    conclusions = []
     significance = []
-    for i in range(len(pvalues)):
-        if pvalues[i] < alpha_level:
+    disclaimer = (
+        "DISCLAIMER: This tool currently conducts a pairwise test for each pair of control and treatment groups "
+        "without correcting for familywise error rate, and is therefore not entirely theoretically correct. "
+        "The appropriate way to go about a multivariate test would be to either conduct an ANOVA or Chi-squared Test "
+        "(using a contingency table). If the null hypothesis (of equality) is rejected, pairwise comparisons can be "
+        "performed using the Tukey-Kramer test or the Fisher's Exact Test respectively to find out which of the "
+        "treatment groups differ significantly from the control. This will be updated in future versions of the tool."
+    )
+
+    for i, pvalue in enumerate(pvalues):
+        if pvalue < alpha_level:
             significance.append("Significant")
         else:
             significance.append("Insignificant")
 
-    disclaimer = "DISCLAIMER: This tool currently conducts a pairwise test for each pair of control and treatment groups without correcting for familywise error rate, and is therefore not entirely theoretically correct."
-    disclaimer += " The appropriate way to go about a multivariate test would be to either conduct an ANOVA or Chi-squared Test (using a contingency table)."
-    disclaimer += " If the null hypothesis (of equality) is rejected, pairwise comparisons can be performed using the Tukey-Kramer test or the Fisher's Exact Test respectively to find out which of the treatment groups differ significantly from the control."
-    disclaimer += " This will be updated in future versions of the tool."
+    significant_groups = {
+        index + 2: diff_in_cr[index] for index, value in enumerate(significance) if value == "Significant"
+    }
 
-    # Statistically significant
-    significant_groups = {}
-    for i in range(len(significance)):
-        if significance[i] == "Significant":
-            significant_groups[i + 2] = pvalues[i]
-        else:
-            pass
-
-    significant_lifts = {}
-    for i in range(len(significant_groups)):
-        significant_lifts[i + 2] = diff_in_cr[i]
-
-    if len(significant_groups) == 0:
-        # Statistically insignificant
-        conclusion += "\nNone of the treatment groups showed a significant absolute increase or decrease over the control group(A), i.e, have a big enough change for it be conclusive enough to make a decision. \n"
-        conclusion += "\nFurther investigation or a larger data may be needed for reliable insights.\n"
-        return (
-            "The test results are :red[statistically insignificant]."
-            + conclusion
-            + "\n"
-            + results["Test"]
-            + "\n"
-            + disclaimer
-        )
+    if not significant_groups:
+        conclusions.append({"text": "None of the treatment groups showed a significant absolute increase or decrease over the control group(A), i.e, have a big enough change for it to be conclusive enough to make a decision.", "className": "text-warning"})
+        conclusions.append({"text": "Further investigation or a larger data may be needed for reliable insights.", "className": "text-info"})
     else:
-        max_uplift = max(significant_lifts, key=lambda x: significant_lifts[x])
-        conclusion += (
-            f"\nTreatment group {max_uplift} showed the greatest absolute uplift of "
-            + str(significant_lifts[max_uplift] * 100)
-            + "% over control group(A). \n"
-        )
-        conclusion += (
-            str((1 - alpha_level) * 100)
-            + "% of the time, the outcome is due to the changes and not due to random chance.\n"
-        )
-        conclusion += f"\nThis suggests that group {max_uplift} is the more effective strategy for increasing conversions.\n"
-        return (
-            "The test results are :green[statistically significant]."
-            + conclusion
-            + "\n"
-            + results["Test"]
-            + "\n"
-            + disclaimer
-        )
+        max_uplift_group = max(significant_groups, key=significant_groups.get)
+        max_uplift = significant_groups[max_uplift_group]
 
+        conclusions.append({"text": f"Treatment group {max_uplift_group} showed the greatest absolute uplift of {max_uplift * 100:.2f}% over control group (A).", "className": "text-success"})
+        conclusions.append({"text": f"{(1 - alpha_level) * 100:.2f}% of the time, the outcome is due to the changes and not due to random chance.", "className": "text-success"})
+        conclusions.append({"text": f"This suggests that group {max_uplift_group} is the more effective strategy for increasing conversions.", "className": "text-success"})
+
+    test_status_color = "green" if significant_groups else "red"
+    conclusions.insert(0, {"text": f"The test results are statistically", "className": ""})
+    conclusions.append({"text": "", "className": ""})
+    conclusions.append({"text": results["Test"], "className": "font-bold"})
+    conclusions.append({"text": "", "className": ""})
+    conclusions.append({"text": disclaimer, "className": ""})
+
+    return conclusions
 
 # Dynamic Input Function
 def analysis_function(
@@ -740,6 +670,7 @@ def analysis_function(
     }
 
     fig_dict = {}
+    status = ""
 
     if len(visitor_counts) == 2:
         fig = plot1(
@@ -755,7 +686,7 @@ def analysis_function(
         fig_json = pi.to_json(fig["Figure"])
         fig_dict = json.loads(fig_json)
 
-        conclusion = generate_conclusion(results, alpha_level, two_tail)
+        conclusion, status = generate_conclusion(results, alpha_level, two_tail)
 
     else:
         fig = None
@@ -775,7 +706,7 @@ def analysis_function(
             {"arm": i + 2, "value": diff_in_cr[i] * 100} for i in range(len(diff_in_cr))
         ],
         "max_uplift": max(uplifts) * 100,
-        "statistically_significant": True if "significant" in conclusion else False,
+        "statistically_significant": True if "significant" == status else False,
         "relative-uplift-values": [
             {"arm": i + 2, "value": uplifts[i] * 100} for i in range(len(uplifts))
         ],
