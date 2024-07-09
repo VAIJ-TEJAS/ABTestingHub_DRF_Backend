@@ -4,9 +4,10 @@ import pandas as pd
 import json
 import plotly.graph_objects as go
 import plotly.io as pi
+from statsmodels.stats.power import TTestIndPower
 
 
-def sample_size_cont(confidence_level, power, baseline_retention, mde, vari, variations, two_tailed, absolute):
+'''def sample_size_cont(confidence_level, power, baseline_retention, mde, vari, variations, two_tailed, absolute):
     alpha = 1 - (confidence_level/100)
     beta = 1 - (power/100)
 
@@ -25,7 +26,25 @@ def sample_size_cont(confidence_level, power, baseline_retention, mde, vari, var
     z_a = stats.norm.ppf(1 - alpha)
     z_power = stats.norm.ppf(beta)
     sample_size = ((z_a + z_power) ** 2 * vari**2) / effect_size
-    return int(np.ceil(sample_size))
+    return int(np.ceil(sample_size))'''
+
+def sample_size_cont(confidence_level, power, baseline_retention, mde, std_dev, variations, two_tailed, absolute):
+    alpha = 1 - (confidence_level/100)
+    beta = power/100
+    if variations > 2:
+        alpha /= (variations - 1)
+
+    if two_tailed:
+        tailed='two-sided'
+    else:
+        tailed='larger'
+
+    if not absolute:
+        mde *= baseline_retention/100
+    
+    effectSize=mde/std_dev
+    analysis=TTestIndPower()
+    return round(analysis.solve_power(effect_size=effectSize,power=beta,alpha=alpha,alternative=tailed))
 
 
 def duration(sample_size, arms, daily_visitors, is_equal, allocations):

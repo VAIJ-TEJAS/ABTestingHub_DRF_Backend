@@ -5,8 +5,11 @@ import numpy as np
 import json
 import plotly.graph_objects as go
 import plotly.io as pi
+from statsmodels.stats.power import zt_ind_solve_power
+from statsmodels.stats.proportion import proportion_effectsize as es
 
-def get_sample_size(confidence_level, power, baseline_val, mde, variations, absolute, two_tailed):
+
+'''def get_sample_size(confidence_level, power, baseline_val, mde, variations, absolute, two_tailed):
     alpha = 1-(confidence_level/100)
     beta = 1-(power)/100
     if variations > 2:
@@ -30,6 +33,27 @@ def get_sample_size(confidence_level, power, baseline_val, mde, variations, abso
     den = (p2 - p1) ** 2
 
     return int(num // den)
+'''
+
+def get_sample_size(confidence_level, power, baseline_val, mde, variations, absolute, two_tailed):
+    alpha = 1-(confidence_level/100)
+    beta = power/100
+    if variations > 2:
+        alpha /= (variations - 1)
+
+    if two_tailed:
+        tailed='two-sided'
+    else:
+        tailed='larger'
+    
+    p1 = baseline_val / 100
+
+    if absolute:
+        p2 = p1 + (mde / 100)
+    else:
+        p2 = p1 + p1 * (mde / 100)
+
+    return round(zt_ind_solve_power(effect_size=es(prop1=p1, prop2=p2), alpha=alpha, power=beta, alternative=tailed))
 
 
 def duration(sample_size, arms, daily_visitors, is_equal, allocations):
@@ -124,8 +148,6 @@ def plot_p(df_alpha_adv, arms, factor, traffic):
 
 
 def calculate_revenue(revenue_per_KPI, baseline, expected_uplift, abs, sample_size_per_arm):
-
-    
     if revenue_per_KPI == None or expected_uplift == None:
         return None, None, None
     else:
