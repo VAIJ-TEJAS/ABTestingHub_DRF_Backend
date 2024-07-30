@@ -12,6 +12,7 @@ from analytics.views import AnswerViewSet, QuestionViewSet
 from user import views as user_views
 from blog.views import ArticleCardViewSet, ArticleViewSet, CategoryViewSet
 from tool.views import TestViewSet
+from feedback.views import FeedbackViewSet
 
 class FileView(APIView):
     def get(self, request):
@@ -34,6 +35,7 @@ router.register(r'categories', CategoryViewSet)
 router.register(r'tests', TestViewSet)
 router.register(r'questions', QuestionViewSet)
 router.register(r'answers', AnswerViewSet)
+router.register(r'feedback', FeedbackViewSet)
 
 urlpatterns = [
     # path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
