@@ -339,7 +339,7 @@ def analysis_function(visitors_input, conversions_input, confidence_level: float
 
     results = {
         "P-Value": pvalues,
-        "Conversion Rate A": conversion_rates,
+        "Conversion Rate": conversion_rates,
         "Test": test,
     }
 
@@ -418,6 +418,20 @@ def analysis_function(visitors_input, conversions_input, confidence_level: float
 #     "arms": 3,
 #     "data": [{"id": 1, "value": 200}, {"id": 2, "value": 202}, {"id": 3, "value": 260}],
 # }
+
+# visitor_input = {
+#     "arms": 2,
+#     "data": [
+#         {"id": 1, "value": 1000},
+#         {"id": 2, "value": 1000},
+#     ],
+# }
+
+# conversion_input = {
+#     "arms": 2,
+#     "data": [{"id": 1, "value": 50}, {"id": 2, "value": 50}],
+# }
+
 
 # answer=analysis_function(visitor_input, conversion_input, 95, "two-tailed")
 # print(answer)

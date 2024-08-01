@@ -4,7 +4,6 @@ import pandas as pd
 import json
 import plotly.graph_objects as go
 import plotly.io as pi
-from statsmodels.stats.power import TTestIndPower
 from scipy import stats
 
 
@@ -31,7 +30,7 @@ from scipy import stats
 
 
 
-def sample_size_formula(confidence_level, power, baseline_retention, mde, std_dev, variations, two_tailed, absolute):
+def sample_size_cont(confidence_level, power, baseline_retention, mde, std_dev, variations, two_tailed, absolute):
     # Adjust alpha if there are more than 2 variations
 
     alpha = 1 - (confidence_level / 100)
