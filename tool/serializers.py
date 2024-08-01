@@ -9,8 +9,13 @@ class TestSerializer(serializers.ModelSerializer):
 
     def get_revenue_impact(self, obj):
         if obj.control_revenue and obj.control_revenue > 0:
-            return ((obj.test_revenue - obj.control_revenue) / obj.control_revenue) * 100
+            return ((obj.test_revenue - obj.control_revenue))
         return None
+    
+    # def get_revenue_impact(self, obj):
+    #     if obj.control_revenue and obj.control_revenue > 0:
+    #         return ((obj.test_revenue - obj.control_revenue) / obj.control_revenue) * 100
+    #     return None
 
     class Meta:
         model = Test

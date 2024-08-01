@@ -4,9 +4,11 @@ import pandas as pd
 import json
 import plotly.graph_objects as go
 import plotly.io as pi
+from statsmodels.stats.power import TTestIndPower
+from scipy import stats
 
 
-def sample_size_cont(confidence_level, power, baseline_retention, mde, vari, variations, two_tailed, absolute):
+'''def sample_size_cont(confidence_level, power, baseline_retention, mde, vari, variations, two_tailed, absolute):
     alpha = 1 - (confidence_level/100)
     beta = 1 - (power/100)
 
@@ -25,7 +27,43 @@ def sample_size_cont(confidence_level, power, baseline_retention, mde, vari, var
     z_a = stats.norm.ppf(1 - alpha)
     z_power = stats.norm.ppf(beta)
     sample_size = ((z_a + z_power) ** 2 * vari**2) / effect_size
-    return int(np.ceil(sample_size))
+    return int(np.ceil(sample_size))'''
+
+
+
+def sample_size_formula(confidence_level, power, baseline_retention, mde, std_dev, variations, two_tailed, absolute):
+    # Adjust alpha if there are more than 2 variations
+
+    alpha = 1 - (confidence_level / 100)
+    power = power / 100
+   
+    if variations > 2:
+        alpha /= (variations - 1)
+
+    # Calculate z-scores
+    if two_tailed:
+        z_alpha = stats.norm.ppf(1 - alpha/2)
+    else:
+        z_alpha = stats.norm.ppf(1 - alpha)
+
+    z_beta = stats.norm.ppf(power)
+
+    if not absolute :
+        mde *= baseline_retention / 100
+
+
+    # Calculate numerator and denominator
+    numerator = ((z_alpha + z_beta) ** 2) * ((std_dev ** 2))*2   #multiplying by 2, considering traffic allocations are equal and all the arms
+    denominator = mde ** 2
+
+    # Calculate sample size
+    n = numerator / denominator
+
+    return round(n, 0)      #It is the required sample size per variation 
+
+
+ 
+
 
 
 def duration(sample_size, arms, daily_visitors, is_equal, allocations):
@@ -67,11 +105,11 @@ def plot_c(df_alpha_adv, arms, factor, traffic):
     """
     trace1 = go.Scatter(x=df_alpha_adv['Confidence Level']/100, 
                         y=df_alpha_adv['Sample Size_a'], 
-                        mode='lines', line=dict(color='rgba(150, 150, 230, 0.85)', width=3.5), 
+                        mode='lines', line=dict(color='#FFFFFF', width=3.5), 
                         yaxis='y1')
     trace2 = go.Scatter(x=df_alpha_adv['Confidence Level']/100, 
                         y=(1/(factor*traffic*arms))*df_alpha_adv['Sample Size_a'], 
-                        mode='lines', line=dict(color='rgba(150, 150, 230, 0.85)', width=3.5), 
+                        mode='lines', line=dict(color='#FFFFFF', width=3.5), 
                         yaxis='y2')
     data = [trace1, trace2]
 
@@ -81,7 +119,10 @@ def plot_c(df_alpha_adv, arms, factor, traffic):
                        xaxis=dict(tickformat='.1%', showgrid=True),
                        yaxis=dict(showgrid=True),
                        yaxis2=dict(showgrid=False, title="Days", overlaying = 'y', side='right'),
-                       showlegend=False)
+                       showlegend=False,
+                       plot_bgcolor='#2E383F',
+                       paper_bgcolor='#2E383F',
+                       font=dict(color='#FFFFFF'))
     
     fig1 = go.Figure(data = data, layout = layout)
 
@@ -91,12 +132,12 @@ def plot_c(df_alpha_adv, arms, factor, traffic):
     """
     trace1 = go.Scatter(x=df_alpha_adv['Power']/100, 
                         y=df_alpha_adv['Sample Size_b'], 
-                        mode='lines', line=dict(color='rgba(150, 150, 230, 0.85)', width=3.5), 
+                        mode='lines', line=dict(color='#FFFFFF', width=3.5), 
                         yaxis='y1')
     
     trace2 = go.Scatter(x=df_alpha_adv['Power']/100, 
                         y=(1/(factor*traffic*arms))*df_alpha_adv['Sample Size_b'], 
-                        mode='lines', line=dict(color='rgba(150, 150, 230, 0.85)', width=3.5), 
+                        mode='lines', line=dict(color='#FFFFFF', width=3.5), 
                         yaxis='y2')
     data = [trace1, trace2]
 
@@ -106,7 +147,10 @@ def plot_c(df_alpha_adv, arms, factor, traffic):
                        xaxis=dict(tickformat='.1%', showgrid=True),
                        yaxis=dict(showgrid=True),
                        yaxis2=dict(showgrid=False, title="Days", overlaying = 'y', side='right'),
-                       showlegend=False)
+                       showlegend=False,
+                       plot_bgcolor='#2E383F',
+                       paper_bgcolor='#2E383F',
+                       font=dict(color='#FFFFFF'))
     
     fig2 = go.Figure(data = data, layout = layout)
 
@@ -116,12 +160,12 @@ def plot_c(df_alpha_adv, arms, factor, traffic):
     """
     trace1 = go.Scatter(x=df_alpha_adv['MDE'], 
                         y=df_alpha_adv['Sample Size_c'], 
-                        mode='lines', line=dict(color='rgba(150, 150, 230, 0.85)', width=3.5), 
+                        mode='lines', line=dict(color='#FFFFFF', width=3.5), 
                         name='MDE vs. Sample Size',
                         yaxis='y1')
     trace2 = go.Scatter(x=df_alpha_adv['MDE'], 
                         y=(1/(factor*traffic*arms))*df_alpha_adv['Sample Size_c'], 
-                        mode='lines', line=dict(color='rgba(150, 150, 230, 0.85)', width=3.5), 
+                        mode='lines', line=dict(color='#FFFFFF', width=3.5), 
                         name='MDE vs. Sample Size',
                         yaxis='y2')
     data = [trace1, trace2]
@@ -132,7 +176,10 @@ def plot_c(df_alpha_adv, arms, factor, traffic):
                        xaxis=dict(tickformat='.1%', showgrid=True),
                        yaxis=dict(showgrid=True),
                        yaxis2=dict(showgrid=False, title="Days", overlaying = 'y', side='right'),
-                       showlegend=False)
+                       showlegend=False,
+                       plot_bgcolor='#2E383F',
+                       paper_bgcolor='#2E383F',
+                       font=dict(color='#FFFFFF'))
     
     fig3 = go.Figure(data = data, layout = layout)
 

@@ -75,11 +75,11 @@ def plot_p(df_alpha_adv, arms, factor, traffic):
     """
     trace1 = go.Scatter(x=df_alpha_adv['Confidence Level']/100, 
                         y=df_alpha_adv['Sample Size_a'], 
-                        mode='lines', line=dict(color='rgba(150, 150, 230, 0.85)', width=3.5), 
+                        mode='lines', line=dict(color='#FFFFFF', width=3.5), 
                         yaxis='y1')
     trace2 = go.Scatter(x=df_alpha_adv['Confidence Level']/100, 
                         y=(1/(factor*traffic*arms))*df_alpha_adv['Sample Size_a'], 
-                        mode='lines', line=dict(color='rgba(150, 150, 230, 0.85)', width=3.5), 
+                        mode='lines', line=dict(color='#FFFFFF', width=3.5), 
                         yaxis='y2')
     data = [trace1, trace2]
 
@@ -89,8 +89,11 @@ def plot_p(df_alpha_adv, arms, factor, traffic):
                        xaxis=dict(tickformat='.1%', showgrid=True),
                        yaxis=dict(showgrid=True),
                        yaxis2=dict(showgrid=False, title="Days", overlaying = 'y', side='right'),
-                       showlegend=False)
-    
+                       showlegend=False,
+                       plot_bgcolor='#2E383F',
+                       paper_bgcolor='#2E383F',
+                       font=dict(color='#FFFFFF'))
+
     fig1 = go.Figure(data = data, layout = layout)
 
 
@@ -99,12 +102,12 @@ def plot_p(df_alpha_adv, arms, factor, traffic):
     """
     trace1 = go.Scatter(x=df_alpha_adv['Power']/100, 
                         y=df_alpha_adv['Sample Size_b'], 
-                        mode='lines', line=dict(color='rgba(150, 150, 230, 0.85)', width=3.5), 
+                        mode='lines', line=dict(color='#FFFFFF', width=3.5), 
                         yaxis='y1')
     
     trace2 = go.Scatter(x=df_alpha_adv['Power']/100, 
                         y=(1/(factor*traffic*arms))*df_alpha_adv['Sample Size_b'], 
-                        mode='lines', line=dict(color='rgba(150, 150, 230, 0.85)', width=3.5), 
+                        mode='lines', line=dict(color='#FFFFFF', width=3.5), 
                         yaxis='y2')
     data = [trace1, trace2]
 
@@ -114,7 +117,10 @@ def plot_p(df_alpha_adv, arms, factor, traffic):
                        xaxis=dict(tickformat='.1%', showgrid=True),
                        yaxis=dict(showgrid=True),
                        yaxis2=dict(showgrid=False, title="Days", overlaying = 'y', side='right'),
-                       showlegend=False)
+                       showlegend=False,
+                       plot_bgcolor='#2E383F',
+                       paper_bgcolor='#2E383F',
+                       font=dict(color='#FFFFFF'))
     
     fig2 = go.Figure(data = data, layout = layout)
 
@@ -124,12 +130,12 @@ def plot_p(df_alpha_adv, arms, factor, traffic):
     """
     trace1 = go.Scatter(x=df_alpha_adv['MDE'], 
                         y=df_alpha_adv['Sample Size_c'], 
-                        mode='lines', line=dict(color='rgba(150, 150, 230, 0.85)', width=3.5), 
+                        mode='lines', line=dict(color='#FFFFFF', width=3.5), 
                         name='MDE vs. Sample Size',
                         yaxis='y1')
     trace2 = go.Scatter(x=df_alpha_adv['MDE'], 
                         y=(1/(factor*traffic*arms))*df_alpha_adv['Sample Size_c'], 
-                        mode='lines', line=dict(color='rgba(150, 150, 230, 0.85)', width=3.5), 
+                        mode='lines', line=dict(color='#FFFFFF', width=3.5), 
                         name='MDE vs. Sample Size',
                         yaxis='y2')
     data = [trace1, trace2]
@@ -140,7 +146,10 @@ def plot_p(df_alpha_adv, arms, factor, traffic):
                        xaxis=dict(tickformat='.1%', showgrid=True),
                        yaxis=dict(showgrid=True),
                        yaxis2=dict(showgrid=False, title="Days", overlaying = 'y', side='right'),
-                       showlegend=False)
+                       showlegend=False,
+                       plot_bgcolor='#2E383F',
+                       paper_bgcolor='#2E383F',
+                       font=dict(color='#FFFFFF'))
     
     fig3 = go.Figure(data = data, layout = layout)
 

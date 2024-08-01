@@ -1,541 +1,214 @@
 import numpy as np
-from scipy import stats
+import scipy.stats as stats
 import plotly.graph_objects as go
+from scipy import stats
 import plotly.io as pi
 import json
 
-# Helper Functions
-def plot1(results, visitors_a, visitors_b, conv_a, conv_b, confidence_level, tail):
-    # Obtaining values from inputs
-    df_a = visitors_a - 1
-    df_b = visitors_b - 1
+def plot1(visitors, conversions, tail, results, confidence_level=95):
+    groups = len(visitors)
+    conversion_rates = np.array(conversions) / np.array(visitors)
+    p_value = results['P-Value']
     alpha = 1 - (confidence_level / 100)
-    p_value = results["P-Value"]
-    interpretation = ""
-    interpretation += "The above graph illustrates probability density functions for assumed conversion rate distributions of control(A) and experiment(B) groups centered around observed conversion rates.\n\n"
-    # Choosing the test to perform
-    n = visitors_a + visitors_b
-    df = n - 2
-    p = (conv_a + conv_b) / n
+    test=results['Test']
 
-    if n * p > 5 and n * (1 - p) > 5:
-        test = "z"
-    else:
-        test = "t"
-
-    # Obtaining relevant details from results
-    conv_rate_a = results["Conversion Rate A"]
-    conv_rate_b = results["Conversion Rate B"]
-    test_statistic = results["Statistic"]
-    # Calculate standard deviations based on percentages
-    sd_a = np.sqrt((conv_rate_a * (1 - conv_rate_a)) / visitors_a)
-    sd_b = np.sqrt((conv_rate_b * (1 - conv_rate_b)) / visitors_b)
-    # Define lower and upper limits for the graph
-    l_a = conv_rate_a - 4 * sd_a
-    l_b = conv_rate_b - 4 * sd_b
-    u_a = conv_rate_a + 4 * sd_a
-    u_b = conv_rate_b + 4 * sd_b
-    # Calculate PDFs for Group A and Group B
-    x_a = np.linspace(l_a, u_a, 500)
-    x_b = np.linspace(l_b, u_b, 500)
-    if test == "z":
-        y_a = stats.norm.pdf(x_a, conv_rate_a, sd_a)
-        y_b = stats.norm.pdf(x_b, conv_rate_b, sd_b)
-    else:
-        y_a = stats.t.pdf(x_a, df_a, conv_rate_a, sd_a)
-        y_b = stats.t.pdf(x_b, df_b, conv_rate_b, sd_b)
-    ymax_line = max(max(y_a), max(y_b)) * 1.1
-    y_mid = max(max(y_a), max(y_b)) * 0.5
+    # Create an interactive plot for normal distribution curves
     fig = go.Figure()
-    # Add traces with transparency and individual x-values
-    fig.add_trace(
-        go.Scatter(
-            x=x_a,
-            y=y_a,
-            mode="lines",
-            name="Group A (Control)",
-            line=dict(color="rgba(255, 99, 71, 0.5)", width=3),
-        )
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=x_b,
-            y=y_b,
-            mode="lines",
-            name="Group B (Experiment)",
-            line=dict(color="rgba(255, 165, 0, 0.5)", width=3),
-        )
-    )
-    # Add the conversion rate lines
-    fig.add_shape(
-        type="line",
-        x0=conv_rate_a,
-        y0=0,
-        x1=conv_rate_a,
-        y1=ymax_line,
-        line=dict(color="rgba(255, 99, 71, 0.6)", width=2),
-        name="Conversion Rate A",
-    )
-    fig.add_shape(
-        type="line",
-        x0=conv_rate_b,
-        y0=0,
-        x1=conv_rate_b,
-        y1=ymax_line,
-        line=dict(color="rgba(255, 165, 0, 0.6)", width=2),
-        name="Conversion Rate B",
-    )
+    x = np.linspace(min(conversion_rates) - 0.1, max(conversion_rates) + 0.1, 1000)
 
-    # Add annotations for the conversion rate lines
-    fig.add_annotation(
-        x=conv_rate_a,
-        y=y_mid,
-        text=f"<b>CR A: {round(100*conv_rate_a, 2)}%</b>",
-        showarrow=False,
-        textangle=-90,
-        xanchor="right",
-    )
-    fig.add_annotation(
-        x=conv_rate_b,
-        y=y_mid,
-        text=f"<b>CR B: {round(100*conv_rate_b, 2)}%</b>",
-        showarrow=False,
-        textangle=-90,
-        xanchor="right",
-    )
-    # Getting confidence interval based on the significance level chosen by the user
-    if tail == "two-tailed":
-        interpretation += f"Dotted lines around conversion rate (A) represent {confidence_level}% confidence interval of the control group."
-        if test == "z":
-            critical_value = stats.norm.ppf(1 - alpha / 2)
+    # Variables to hold max density value for scaling y-axis and colors
+    max_density = 0
+    # colors = ['red', 'orange', 'green', 'blue', 'purple', 'brown']
+    # colors=['54C1E2','8A54E2','E25490','5754E2','E25454','D3F27B','F2917B','9575F0','F9D1A8','F9F9A8','FF0000','D1A8F9','F816F8','A8F9F9','BEBEBE','0400DD','C5F9A8','F9A8A8','0FC70B']
+    colors = ['#54C1E2', '#8A54E2', '#E25490', '#5754E2', '#E25454', '#D3F27B', 
+          '#F2917B', '#9575F0', '#F9D1A8', '#F9F9A8', '#FF0000', '#D1A8F9', 
+          '#F816F8', '#A8F9F9', '#BEBEBE', '#0400DD', '#C5F9A8', '#F9A8A8', 
+          '#0FC70B']
+    interpretation=''
+    
+    for i in range(groups):
+        mean = conversion_rates[i]
+        std_err = np.sqrt((mean * (1 - mean)) / visitors[i])
+        dof = visitors[i] - 1
+        if test == 'z':
+            y = stats.norm.pdf(x, mean, std_err)
         else:
-            critical_value = stats.t.ppf(1 - alpha / 2, df)
-
-        ciA = (
-            conv_rate_a - (critical_value * sd_a),
-            conv_rate_a + (critical_value * sd_a),
-        )
-        ciB = (
-            conv_rate_b - (critical_value * sd_b),
-            conv_rate_b + (critical_value * sd_b),
-        )
-
-        if test == "z":
-            x_fill = np.linspace(ciA[1], x_b[-1], 500)
-            yb_fill = stats.norm.pdf(x_fill, conv_rate_b, sd_b)
-        else:
-            x_fill = np.linspace(ciA[1], x_b[-1], 500)
-            yb_fill = stats.t.pdf(x_fill, df_b, conv_rate_b, sd_b)
-
-        if p_value < alpha:
-            if conv_rate_b > ciA[1]:
-                # Adding confidence interval lines for B when the result is significant
-                fig.add_shape(
-                    type="line",
-                    x0=ciA[0],
-                    y0=0,
-                    x1=ciA[0],
-                    y1=ymax_line,
-                    line=dict(color="rgba(255, 99, 71, 0.5)", dash="dot"),
-                    name="Confidence Interval A (Two-Tailed)",
-                )
-                fig.add_shape(
-                    type="line",
-                    x0=ciA[1],
-                    y0=0,
-                    x1=ciA[1],
-                    y1=ymax_line,
-                    line=dict(color="rgba(255, 99, 71, 0.5)", dash="dot"),
-                )
-                fig.add_annotation(
-                    x=ciA[0],
-                    y=ymax_line,
-                    text=f"<b>{int(100*(1-alpha))}% CI A <br>{round(100*ciA[0], 2)}%</b>",
-                    showarrow=False,
-                    textangle=0,
-                    xanchor="right",
-                )
-                fig.add_annotation(
-                    x=ciA[1],
-                    y=ymax_line,
-                    text=f" <b>{int(100*(1-alpha))}% CI A <br>{round(100*ciA[1], 2)}%</b>",
-                    showarrow=False,
-                    textangle=0,
-                    xanchor="left",
-                )
-
-                # Filling the uplift region green to show that the result was significant
-                fig.add_trace(
-                    go.Scatter(
-                        x=x_fill,
-                        y=yb_fill,
-                        fill="tozeroy",
-                        fillcolor="rgba(0, 128, 0, 0.3)",
-                        line=dict(color="rgba(0, 128, 0, 0.5)", width=2),
-                        name="Significant Positive Uplift",
-                    )
-                )
-                interpretation += f" The Conversion rate of Group B falls to the right of the {confidence_level}% confidence interval of the control group. \n\nThe uplift region is shaded green in the visualization to showcase the significant positive uplift. "
-
-            elif conv_rate_b < ciA[0]:
-
-                # Adding confidence interval lines for B when the result is significant
-                fig.add_shape(
-                    type="line",
-                    x0=ciA[0],
-                    y0=0,
-                    x1=ciA[0],
-                    y1=ymax_line,
-                    line=dict(color="rgba(255, 99, 71, 0.5)", dash="dot"),
-                    name="Confidence Interval A (Two-Tailed)",
-                )
-                fig.add_shape(
-                    type="line",
-                    x0=ciA[1],
-                    y0=0,
-                    x1=ciA[1],
-                    y1=ymax_line,
-                    line=dict(color="rgba(255, 99, 71, 0.5)", dash="dot"),
-                )
-                fig.add_annotation(
-                    x=ciA[0],
-                    y=ymax_line,
-                    text=f"<b>{int(100*(1-alpha))}% CI A <br>{round(100*ciA[0], 2)}%</b>",
-                    showarrow=False,
-                    textangle=0,
-                    xanchor="left",
-                )
-                fig.add_annotation(
-                    x=ciA[1],
-                    y=ymax_line,
-                    text=f" <b>{int(100*(1-alpha))}% CI A <br>{round(100*ciA[1], 2)}%</b>",
-                    showarrow=False,
-                    textangle=0,
-                    xanchor="left",
-                )
-
-                # Filling the entire B region red to show that the we had negative conversions in test
-                if test == "z":
-                    xfill_b = np.linspace(x_b[0], ciA[0], 500)
-                    yfill_b = stats.norm.pdf(xfill_b, conv_rate_b, sd_b)
-                else:
-                    xfill_b = np.linspace(x_b[0], ciA[0], 500)
-                    yfill_b = stats.t.pdf(xfill_b, df_b, conv_rate_b, sd_b)
-                fig.add_trace(
-                    go.Scatter(
-                        x=xfill_b,
-                        y=yfill_b,
-                        fill="tozeroy",
-                        fillcolor="rgba(128, 0, 0, 0.3)",
-                        line=dict(color="rgba(128, 0, 0, 0.5)", width=2),
-                        name="Significant Negative Uplift",
-                    )
-                )
-                interpretation += f" The Conversion rate of Group B falls to the left of the {confidence_level}% confidence interval of the control group. \n\nThe uplift region is shaded red in the visualization to showcase the significant negative uplift. "
-
-        else:
-            if conv_rate_b > ciA[1]:
-                # Adding confidence interval lines for B when the result is significant
-                fig.add_shape(
-                    type="line",
-                    x0=ciA[0],
-                    y0=0,
-                    x1=ciA[0],
-                    y1=ymax_line,
-                    line=dict(color="rgba(255, 99, 71, 0.5)", dash="dot"),
-                    name="Confidence Interval A (Two-Tailed)",
-                )
-                fig.add_shape(
-                    type="line",
-                    x0=ciA[1],
-                    y0=0,
-                    x1=ciA[1],
-                    y1=ymax_line,
-                    line=dict(color="rgba(255, 99, 71, 0.5)", dash="dot"),
-                )
-                fig.add_annotation(
-                    x=ciA[0],
-                    y=ymax_line,
-                    text=f"<b>{int(100*(1-alpha))}% CI A <br>{round(100*ciA[0], 2)}%</b>",
-                    showarrow=False,
-                    textangle=0,
-                    xanchor="right",
-                )
-                fig.add_annotation(
-                    x=ciA[1],
-                    y=ymax_line,
-                    text=f" <b>{int(100*(1-alpha))}% CI A <br>{round(100*ciA[1], 2)}%</b>",
-                    showarrow=False,
-                    textangle=0,
-                    xanchor="left",
-                )
-
-                # Filling the uplift region green to show that the result was significant
-                fig.add_trace(
-                    go.Scatter(
-                        x=x_fill,
-                        y=yb_fill,
-                        fill="tozeroy",
-                        fillcolor="rgba(128, 128, 128, 0.5)",
-                        line=dict(color="rgba(0, 128, 0, 0.5)", width=2),
-                        name="Insignificant Positive Uplift",
-                    )
-                )
-                interpretation += f" The Conversion rate of Group B falls to the right of the {confidence_level}% confidence interval of the control group."
-                interpretation += "\n\nThe uplift is insignificant because unequal sample sizes of groups A and B result in different standard deviations for the probability distributions. The uplift region is shaded grey to showcase the same."
-
-            elif conv_rate_b < ciA[0]:
-                # Adding confidence interval lines for B when the result is significant
-                fig.add_shape(
-                    type="line",
-                    x0=ciA[0],
-                    y0=0,
-                    x1=ciA[0],
-                    y1=ymax_line,
-                    line=dict(color="rgba(255, 99, 71, 0.5)", dash="dot"),
-                    name="Confidence Interval A (Two-Tailed)",
-                )
-                fig.add_shape(
-                    type="line",
-                    x0=ciA[1],
-                    y0=0,
-                    x1=ciA[1],
-                    y1=ymax_line,
-                    line=dict(color="rgba(255, 99, 71, 0.5)", dash="dot"),
-                )
-                fig.add_annotation(
-                    x=ciA[0],
-                    y=ymax_line,
-                    text=f"<b>{int(100*(1-alpha))}% CI A <br>{round(100*ciA[0], 2)}%</b>",
-                    showarrow=False,
-                    textangle=0,
-                    xanchor="left",
-                )
-                fig.add_annotation(
-                    x=ciA[1],
-                    y=ymax_line,
-                    text=f" <b>{int(100*(1-alpha))}% CI A <br>{round(100*ciA[1], 2)}%</b>",
-                    showarrow=False,
-                    textangle=0,
-                    xanchor="left",
-                )
-                # Filling the entire B region red to show that the we had negative conversions in test
-                if test == "z":
-                    xfill_b = np.linspace(x_b[0], ciA[0], 500)
-                    yfill_b = stats.norm.pdf(xfill_b, conv_rate_b, sd_b)
-                else:
-                    xfill_b = np.linspace(x_b[0], ciA[0], 500)
-                    yfill_b = stats.t.pdf(xfill_b, df_b, conv_rate_b, sd_b)
-                fig.add_trace(
-                    go.Scatter(
-                        x=xfill_b,
-                        y=yfill_b,
-                        fill="tozeroy",
-                        fillcolor="rgba(128, 128, 128, 0.5)",
-                        line=dict(color="rgba(128, 0, 0, 0.5)", width=2),
-                        name="Insignificant Negative Uplift",
-                    )
-                )
-                interpretation += f" The Conversion rate of Group B falls to the left of the {confidence_level}% confidence interval of the control group. \n\nThe uplift region is shaded grey in the visualization to showcase the insignificant negative uplift. "
-
+            y = stats.t.pdf(x, dof, mean, std_err)
+        
+        if(i==0):
+            if test == 'z':
+                critical_value=stats.norm.ppf(1 - alpha/2) if tail=='two' else stats.norm.ppf(1 - alpha)
+                ci_upper = mean + critical_value * std_err
+                ci_lower = mean - critical_value * std_err 
             else:
-                # Adding confidence interval lines for B when the result is insignificant
-                fig.add_shape(
-                    type="line",
-                    x0=ciA[0],
-                    y0=0,
-                    x1=ciA[0],
-                    y1=ymax_line,
-                    line=dict(color="rgba(255, 99, 71, 0.5)", dash="dot"),
-                    name="Confidence Interval A (Two-Tailed)",
-                )
-                fig.add_shape(
-                    type="line",
-                    x0=ciA[1],
-                    y0=0,
-                    x1=ciA[1],
-                    y1=ymax_line,
-                    line=dict(color="rgba(255, 99, 71, 0.5)", dash="dot"),
-                )
-                fig.add_annotation(
-                    x=ciA[0],
-                    y=ymax_line,
-                    text=f"<b>{int(100*(1-alpha))}% CI A <br>{round(100*ciA[0], 2)}%</b>",
-                    showarrow=False,
-                    textangle=0,
-                    xanchor="right",
-                )
-                fig.add_annotation(
-                    x=ciA[1],
-                    y=ymax_line,
-                    text=f" <b>{int(100*(1-alpha))}% CI A <br>{round(100*ciA[1], 2)}%</b>",
-                    showarrow=False,
-                    textangle=0,
-                    xanchor="left",
-                )
-                # Filling the uplift region grey to show that the result was insignificant
-                fig.add_trace(
-                    go.Scatter(
-                        x=x_fill,
-                        y=yb_fill,
-                        fill="tozeroy",
-                        fillcolor="rgba(120,120, 120,0.3)",
-                        line=dict(color="rgba(128, 128, 128, 0.5)", width=2),
-                        name="Insignificant Uplift",
-                    )
-                )
-                interpretation += f" The Conversion rate of Group B falls within the {confidence_level}% confidence interval of the control group. \n\nThe uplift region is shaded grey in the visualization to showcase tha insignificant uplift. "
+                critical_value=stats.t.ppf(1 - alpha,dof) if tail=='two' else stats.norm.ppf(1 - alpha)
+                ci_upper = mean + critical_value * std_err
+                ci_lower = mean - critical_value * std_err
 
-    # ASSUMING RIGHT TAILED ONLY
-    elif tail == "one-tailed":
-        interpretation += f"The single dotted line represents the upper bound of {confidence_level}% confidence level of the control group for the right-tailed test."
+        max_density = max(max_density, max(y))
 
-        if test == "z":
-            critical_value = stats.norm.ppf(1 - alpha)
-        else:
-            critical_value = stats.t.ppf(1 - alpha, df)
-        ciA = conv_rate_a + (critical_value * sd_a)
-        ciB = conv_rate_b + (critical_value * sd_b)
+        fig.add_trace(go.Scatter(
+            x=x,
+            y=y,
+            mode='lines',
+            name=f'Group {i + 1} (CR: {mean:.2%})',
+            line=dict(color=colors[i % len(colors)])
+        ))
 
-        ci = 2 * ciB
-        fig.add_shape(
-            type="line",
-            x0=ciA,
-            y0=0,
-            x1=ciA,
-            y1=ymax_line,
-            line=dict(color="rgba(255, 99, 71, 0.5)", dash="dot"),
-            name="Confidence Interval A (One-Tailed)",
-        )
-        fig.add_annotation(
-            x=ciA,
-            y=ymax_line,
-            text=f"<b>{int(100*(1-alpha))}% CI A <br>{round(100*ciA, 2)}%</b>",
-            showarrow=False,
-            textangle=0,
-            xanchor="left",
-        )
-        if p_value < alpha:
-            if conv_rate_b > ciA:
-                x_fill = np.linspace(ciA, x_b[-1], 500)
-                if test == "z":
-                    y_fill = stats.norm.pdf(x_fill, conv_rate_b, sd_b)
-                else:
-                    y_fill = stats.t.pdf(x_fill, df_b, conv_rate_b, sd_b)
-                fig.add_trace(
-                    go.Scatter(
-                        x=x_fill,
-                        y=y_fill,
-                        fill="tozeroy",
-                        fillcolor="rgba(0, 128, 0, 0.3)",
-                        line=dict(color="rgba(0, 128, 0, 0.5)", width=2),
-                        name="Significant Uplift",
-                    )
-                )
-                interpretation += f" The Conversion rate of Group B falls to the right of the {confidence_level}% confidence level of the control group. \n\nThe uplift region is shaded green in the visualization to showcase the significant positive uplift. "
+        # Add vertical lines for mean conversion rates
+        fig.add_trace(go.Scatter(
+            x=[mean, mean],
+            y=[0, max_density],
+            mode='lines',
+            name=f'CR Group {i + 1}: {mean:.2%}',
+            line=dict(color=colors[i % len(colors)], dash='dash')
+        ))
+        if i==0:
+            # Add ci_upper line
+            fig.add_trace(go.Scatter(
+                x=[ci_upper, ci_upper, None, None],
+                y=[0, max_density, max_density, 0],
+                name='CI Upper',
+                fill='tozeroy',
+                fillcolor='green',
+                line=dict(color='#FFFFFF'),
+                opacity=0.2,
+                showlegend=False,
+                cliponaxis=False
+            ))
+            
+            #add ci_lower line
+            fig.add_trace(go.Scatter(
+            x=[ci_lower, ci_lower, None, None],
+            y=[0, max_density, max_density, 0],
+            name='CI Lower',
+            fill='tozeroy',
+            fillcolor='red',
+            line=dict(color='#FFFFFF'),
+            opacity=0.2,
+            showlegend=False,
+            cliponaxis=False
+            ))
+            
+             # Add annotations for CI lines
+            fig.add_annotation(
+                x=ci_upper,
+                y=max_density,
+                text="CI Upper",
+                showarrow=True,
+                arrowhead=2,
+                ax=20,
+                ay=-30,
+                font=dict(color='#FFFFFF')
+            )
+            fig.add_annotation(
+                x=ci_lower,
+                y=max_density,
+                text="CI Lower",
+                showarrow=True,
+                arrowhead=2,
+                ax=-20,
+                ay=-30,
+                font=dict(color='#FFFFFF')
+            )
+        
+        if tail=="two-tailed" and i!=0:
+        # Add shaded area above ci_upper
+            x_fill = x[x > ci_upper]
+            y_fill = y[x > ci_upper]
 
+            fig.add_trace(go.Scatter(
+                x=np.concatenate(([ci_upper], x_fill, [x_fill[-1], ci_upper])),
+                y=np.concatenate(([0], y_fill, [0, 0])),
+                fill='toself',
+                fillcolor='rgba(0,255,0,0.2)' if p_value[i-1]<alpha else 'rgba(128,128,128,0.2)',  # Green color with transparency
+                line=dict(color='rgba(255,255,255,0)'),
+                showlegend=False
+            ))
+            
+            # Add shaded area below ci_lower (if two-tailed)
+            x_fill = x[x < ci_lower]
+            y_fill = y[x < ci_lower]
+
+            fig.add_trace(go.Scatter(
+                x=np.concatenate(([ci_lower], x_fill, [x_fill[-1], ci_lower])),
+                y=np.concatenate(([0], y_fill, [0, 0])),
+                fill='toself',
+                fillcolor='rgba(255,0,0,0.2)' if p_value[i-1]<alpha else 'rgba(128,128,128,0.2)',  # Red color with transparency
+                line=dict(color='rgba(255,255,255,0)'),
+                showlegend=False
+            ))
+        elif (i!=0):
+            # Right one-tailed
+            # Add shaded area above ci_upper
+            x_fill = x[x > ci_upper]
+            y_fill = y[x > ci_upper]
+            fig.add_trace(go.Scatter(
+                x=np.concatenate(([ci_upper], x_fill, [x_fill[-1], ci_upper])),
+                y=np.concatenate(([0], y_fill, [0, 0])),
+                fill='toself',
+                fillcolor='rgba(0,255,0,0.2)' if p_value[i-1]<alpha else 'rgba(128,128,128,0.2)',  # Green color with transparency if significant else grey
+                line=dict(color='rgba(255,255,255,0)'),
+                showlegend=False
+            ))
+
+        
+        if(i!=0):
+            if(p_value[i-1]<alpha):
+                if conversion_rates[i]>ci_upper:
+                    interpretation+= f"The Conversion rate of Group {i+1} falls to the right of the {confidence_level}% confidence interval of the control group.\nThe uplift region is shaded green in the visualization to showcase the significant positive uplift.\n\n"
+                elif conversion_rates[i]<ci_lower and tail=='two':
+                    interpretation += f"The Conversion rate of Group {i+1} falls to the left of the {confidence_level}% confidence interval of the control group.\nThe uplift region is shaded red in the visualization to showcase the significant negative uplift.\n\n"   
             else:
-                x_fill = np.linspace(ciA, x_b[-1], 500)
-                if test == "z":
-                    y_fill = stats.norm.pdf(x_fill, conv_rate_b, sd_b)
-                else:
-                    y_fill = stats.t.pdf(x_fill, df_b, conv_rate_b, sd_b)
-                fig.add_trace(
-                    go.Scatter(
-                        x=x_fill,
-                        y=y_fill,
-                        fill="tozeroy",
-                        fillcolor="rgba(128,128,128,0.3)",
-                        line=dict(color="rgba(128, 128, 128, 0.5)", width=2),
-                        name="Insignificant Uplift",
-                    )
-                )
-                interpretation += f" The Conversion rate of Group B falls under the {confidence_level}% confidence level of the control group. \n\nThe uplift region is shaded grey in the visualization to represent the region where the conversion rate B should be to obtain significant results. "
+                if conversion_rates[i]>ci_upper and tail=='two':
+                    interpretation += f"The Conversion rate of Group {i+1} falls to the right of the {confidence_level}% confidence interval of the control group.\n"
+                    interpretation += f"The uplift is insignificant because unequal sample sizes of groups 0 and {i} result in different standard deviations for the probability distributions.\n"
+                    interpretation+="The uplift region is shaded grey to showcase the same.\n\n"
+                elif conversion_rates[i]<ci_lower and tail=='two':
+                    interpretation += f"The Conversion rate of Group {i+1} falls to the left of the {confidence_level}% confidence interval of the control group.\n"
+                    interpretation += f"The uplift is insignificant because unequal sample sizes of groups 0 and {i} result in different standard deviations for the probability distributions.\n"
+                    interpretation+="The uplift region is shaded grey to showcase negative uplift.\n\n"
 
-        else:
-            if conv_rate_b > ciA:
-                x_fill = np.linspace(ciA, x_b[-1], 500)
-                if test == "z":
-                    y_fill = stats.norm.pdf(x_fill, conv_rate_b, sd_b)
-                else:
-                    y_fill = stats.t.pdf(x_fill, df_b, conv_rate_b, sd_b)
-                fig.add_trace(
-                    go.Scatter(
-                        x=x_fill,
-                        y=y_fill,
-                        fill="tozeroy",
-                        fillcolor="rgba(128,128,128,0.3)",
-                        line=dict(color="rgba(0, 128, 0, 0.5)", width=2),
-                        name="Insignificant Uplift",
-                    )
-                )
-                interpretation += f" The Conversion rate of Group B falls to the right of the {confidence_level}% confidence level of the control group."
-                interpretation += "\n\nThe uplift is insignificant because unequal sample sizes of groups A and B result in different standard deviations for the probability distributions. The uplift region is shaded grey to showcase the same."
+                elif tail=='two':
+                    interpretation += f"The Conversion rate of Group {i+1} falls within the {confidence_level}% confidence interval of the control group.\n"
+                    interpretation += f"The uplift is insignificant because unequal sample sizes of groups 0 and {i} result in different standard deviations for the probability distributions.\n\n"
 
-            else:
-                x_fill = np.linspace(ciA, x_b[-1], 500)
-                if test == "z":
-                    y_fill = stats.norm.pdf(x_fill, conv_rate_b, sd_b)
-                else:
-                    y_fill = stats.t.pdf(x_fill, df_b, conv_rate_b, sd_b)
-                fig.add_trace(
-                    go.Scatter(
-                        x=x_fill,
-                        y=y_fill,
-                        fill="tozeroy",
-                        fillcolor="rgba(128,128,128,0.3)",
-                        line=dict(color="rgba(128, 128, 128, 0.5)", width=2),
-                        name="Insignificant Uplift",
-                    )
-                )
-                interpretation += f" The Conversion rate of Group B falls under the {confidence_level}% confidence level of the control group. \n\nThe uplift region is shaded grey in the visualization to represent the region where the conversion rate B should be to obtain significant results. "
 
-    # Set x-axis tick format to percentages
-    fig.update_layout(xaxis_tickformat=".1%")
-    # Add x and y labels and title
+    # Add layout details
     fig.update_layout(
-        autosize=True,
-        xaxis_title="Conversion Rate (%)",
-        yaxis_title="Probability Density Function",
-        # width=1200,
-        # height=700,
-        # responsive=True
-    )
-    # Legend layout and size
-    fig.update_layout(
-        legend=dict(
-            orientation="v",
-            yanchor="bottom",
-            y=0.84,
-            xanchor="right",
-            x=0.98,
-            font=dict(size=15),
-        )
+        title='Conversion Rate Distribution of Different Groups',
+        xaxis_title='Conversion Rate (%)',
+        yaxis_title='Probability Density Function',
+        legend=dict(x=0.8, y=1),
+        plot_bgcolor='#2E383F',
+        paper_bgcolor='#2E383F',
+        font=dict(color='#FFFFFF')
     )
 
+    # fig.show()
+    # print(interpretation)
     return {"Figure": fig, "Interpretation": interpretation}
 
-
-def generate_conclusion(results, confidence_level, tail):
+def generate_conclusion(results, alpha):
     conclusions = []
-    alpha = confidence_level
-    absolute = results['Conversion Rate B']*100 - results['Conversion Rate A']*100
+    conversion_rates=results['Conversion Rate']
+    absolute = conversion_rates[1]*100 - conversion_rates[0]*100
     abs_value = round(absolute, 2)
-    level = (1 - alpha) * 100
-
+    confidence_level = (1 - alpha) * 100
+    
     # Determine the significance and direction of the result
-    if results['P-Value'] < alpha:
+    if results['P-Value'][0] < alpha:
         status = "significant"
-        if results['Conversion Rate A'] < results['Conversion Rate B']:
-            conclusions.append({"text": f"The treatment group (B) showed a {abs_value}% absolute uplift over control group (A). {level}% of the time, the outcome is due to the changes and not due to random chance. This suggests that group B is the more effective strategy for increasing conversions.", "className": ''})
-        elif results['Conversion Rate A'] > results['Conversion Rate B']:
-            conclusions.append({"text": f"The treatment group (B) showed a {abs_value}% absolute decrease over control group (A). {level}% of the time, the outcome is due to the changes and not due to random chance. This suggests that group B is not an effective strategy for increasing conversions.", "className": ''})
+        if conversion_rates[0] < conversion_rates[1]:
+            conclusions.append({"text": f"The treatment group (B) showed a {abs_value}% absolute uplift over control group (A). {confidence_level}% of the time, the outcome is due to the changes and not due to random chance. This suggests that group B is the more effective strategy for increasing conversions.", "className": ''})
+        elif conversion_rates[0] > conversion_rates[1]:
+            conclusions.append({"text": f"The treatment group (B) showed a {abs_value}% absolute decrease over control group (A). {confidence_level}% of the time, the outcome is due to the changes and not due to random chance. This suggests that group B is not an effective strategy for increasing conversions.", "className": ''})
 
     else:
         status = "insignificant"
-        if results['Conversion Rate A'] < results['Conversion Rate B']:
+        if conversion_rates[0] < conversion_rates[1]:
             conclusions.append({"text": f"Despite treatment group (B) showing a {abs_value}% absolute uplift over control group (A), it is not conclusive enough to make a decision. Further investigation or a larger data set may be needed for reliable insights.", "className": ''})
-        elif results['Conversion Rate A'] > results['Conversion Rate B']:
+        elif conversion_rates[0] > conversion_rates[1]:
             conclusions.append({"text": f"Though the treatment group (B) showed a {abs_value}% absolute decrease over control group (A), it is not conclusive enough to make a decision. Further investigation or a larger data set may be needed for reliable insights.", "className": ''})
 
     # Add test type and significance to conclusions
@@ -546,9 +219,7 @@ def generate_conclusion(results, confidence_level, tail):
     return conclusions, status
 
 
-def generate_conclusion_mvt(results: dict, diff_in_cr: list, pvalues: list, alpha_level: float, tail: str):
-    conclusions = []
-    significance = []
+def generate_conclusion_mvt(results: dict, diff_in_cr: list, alpha_level: float):
     disclaimer = (
         "DISCLAIMER: This tool currently conducts a pairwise test for each pair of control and treatment groups "
         "without correcting for familywise error rate, and is therefore not entirely theoretically correct. "
@@ -557,8 +228,10 @@ def generate_conclusion_mvt(results: dict, diff_in_cr: list, pvalues: list, alph
         "performed using the Tukey-Kramer test or the Fisher's Exact Test respectively to find out which of the "
         "treatment groups differ significantly from the control. This will be updated in future versions of the tool."
     )
+    conclusions = []
+    significance = []
 
-    for i, pvalue in enumerate(pvalues):
+    for i, pvalue in enumerate(results['P-Value']):
         if pvalue < alpha_level:
             significance.append("Significant")
         else:
@@ -586,19 +259,17 @@ def generate_conclusion_mvt(results: dict, diff_in_cr: list, pvalues: list, alph
     conclusions.append({"text": "", "className": ""})
     conclusions.append({"text": disclaimer, "className": ""})
 
-    return conclusions
+    return conclusions,significance
 
-# Dynamic Input Function
-def analysis_function(
-    visitors_input, conversions_input, confidence_level: float, two_tail
-):
-    alpha_level = round(1 - confidence_level, 2)
+
+def analysis_function(visitors_input, conversions_input, confidence_level: float, two_tail):
     visitor_counts = []
     for i in range(visitors_input["arms"]):
         visitor_counts.append(visitors_input["data"][i]["value"])
     conversion_counts = []
     for i in range(conversions_input["arms"]):
         conversion_counts.append(conversions_input["data"][i]["value"])
+    alpha_level = round(1 - confidence_level/100, 2)
 
     N = sum(value for value in visitor_counts)
     test = ""
@@ -645,27 +316,30 @@ def analysis_function(
     ]
 
     pvalues = []
+
     for i in range(len(statistic_scores)):
-        if ((N * pooled_props[i]) > 5) & ((N * (1 - pooled_props[i])) > 5):
+        if ((N * pooled_props[i]) > 5) and ((N * (1 - pooled_props[i])) > 5):
             test = "NOTE: Z-test is being performed as the total count of conversions is sufficiently large.\n"
             if two_tail == "two-tailed":
-                pvalues.append(2 * stats.norm.cdf(-np.abs(statistic_scores[i])))
+                pvalues.append(2 * (1 - stats.norm.cdf(np.abs(statistic_scores[i]))))
             else:
-                pvalues.append(stats.norm.cdf(statistic_scores[i]))
+                if statistic_scores[i] > 0:
+                    pvalues.append(1 - stats.norm.cdf(statistic_scores[i]))  # Greater than direction
+                else:
+                    pvalues.append(stats.norm.cdf(statistic_scores[i]))  # Less than direction
         else:
             test = "NOTE: t-test is being performed as the total count of conversions is pretty small.\n"
             if two_tail == "two-tailed":
-                pvalues.append(
-                    2 * (1 - stats.t.cdf(np.abs(statistic_scores[i]), dfs[i]))
-                )
+                pvalues.append(2 * (1 - stats.t.cdf(np.abs(statistic_scores[i]), dfs[i])))
             else:
-                pvalues.append(1 - stats.t.cdf(abs(statistic_scores[i]), dfs[i]))
+                if statistic_scores[i] > 0:
+                    pvalues.append(1 - stats.t.cdf(statistic_scores[i], dfs[i]))  # Greater than direction
+                else:
+                    pvalues.append(stats.t.cdf(statistic_scores[i], dfs[i]))  # Less than direction
 
     results = {
-        "P-Value": pvalues[0],
-        "Conversion Rate A": conversion_rates[0],
-        "Conversion Rate B": conversion_rates[1],
-        "Statistic": statistic_scores[0],
+        "P-Value": pvalues,
+        "Conversion Rate A": conversion_rates,
         "Test": test,
     }
 
@@ -673,26 +347,33 @@ def analysis_function(
     status = ""
 
     if len(visitor_counts) == 2:
-        fig = plot1(
-            results,
-            visitor_counts[0],
-            visitor_counts[1],
-            conversion_counts[0],
-            conversion_counts[1],
-            (1 - alpha_level) * 100,
+        fig=plot1(
+            visitor_counts,
+            conversion_counts,
             two_tail,
+            results,
+            confidence_level
         )
 
         fig_json = pi.to_json(fig["Figure"])
         fig_dict = json.loads(fig_json)
 
-        conclusion, status = generate_conclusion(results, alpha_level, two_tail)
+        conclusion, status = generate_conclusion(results, alpha_level)
+        significance=[status]
 
     else:
-        fig = None
-        conclusion = generate_conclusion_mvt(
-            results, diff_in_cr, pvalues, alpha_level, two_tail
+        fig = plot1(
+            visitor_counts,
+            conversion_counts,
+            two_tail,
+            results,
+            confidence_level
         )
+
+        fig_json = pi.to_json(fig["Figure"])
+        fig_dict = json.loads(fig_json)
+
+        conclusion,significance = generate_conclusion_mvt(results, diff_in_cr, alpha_level)
 
     print(conclusion)
 
@@ -706,7 +387,7 @@ def analysis_function(
             {"arm": i + 2, "value": diff_in_cr[i] * 100} for i in range(len(diff_in_cr))
         ],
         "max_uplift": max(uplifts) * 100,
-        "statistically_significant": True if "significant" == status else False,
+        # "statistically_significant": True if "significant" == status else False,
         "relative-uplift-values": [
             {"arm": i + 2, "value": uplifts[i] * 100} for i in range(len(uplifts))
         ],
@@ -715,76 +396,28 @@ def analysis_function(
             for i in range(len(standard_errors))
         ],
         "p-values": [{"arm": i + 2, "value": pvalues[i]} for i in range(len(pvalues))],
+        "significance": [{"arm": i + 2, "value": significance[i]} for i in range(len(significance))],
         "warnings": warnings,
         "conclusion": conclusion,
         "figure": fig_dict,
     }
+    fig["Figure"].show()
 
     return data_as_response
 
+# visitor_input = {
+#     "arms": 3,
+#     "data": [
+#         {"id": 1, "value": 1000},
+#         {"id": 2, "value": 1000},
+#         {"id": 3, "value": 1000},
+#     ],
+# }
 
-# Expecting visitor and conversions dictionary to be in this format:
-#     visitors_input =  {"arms":5,
-#                     "data":[
-#                         {
-#                         "id":1,
-#                         "value":23
-#                         },
-#                         {
-#                         "id":2,
-#                         "value":23
-#                         },
-#                         {
-#                         "id":3,
-#                         "value":23
-#                         },
-#                         {
-#                         "id":4,
-#                         "value":23
-#                         },
-#                         {
-#                         "id":5,
-#                         "value":23
-#                         }
-#                     ]
-#                     }
+# conversion_input = {
+#     "arms": 3,
+#     "data": [{"id": 1, "value": 200}, {"id": 2, "value": 202}, {"id": 3, "value": 260}],
+# }
 
-#     conversions_input =  {"arms":5,
-#                     "data":[
-#                         {
-#                         "id":1,
-#                         "value":23
-#                         },
-#                         {
-#                         "id":2,
-#                         "value":23
-#                         },
-#                         {
-#                         "id":3,
-#                         "value":23
-#                         },
-#                         {
-#                         "id":4,
-#                         "value":23
-#                         },
-#                         {
-#                         "id":5,
-#                         "value":23
-#                         }
-#                     ]
-#                     }
-
-# Example
-visitor_input = {
-    "arms": 3,
-    "data": [
-        {"id": 1, "value": 1000},
-        {"id": 2, "value": 1000},
-        {"id": 3, "value": 1000},
-    ],
-}
-
-conversion_input = {
-    "arms": 3,
-    "data": [{"id": 1, "value": 200}, {"id": 2, "value": 240}, {"id": 3, "value": 260}],
-}
+# answer=analysis_function(visitor_input, conversion_input, 95, "two-tailed")
+# print(answer)
