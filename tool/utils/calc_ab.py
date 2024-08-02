@@ -200,9 +200,9 @@ def generate_conclusion(results, alpha):
     if results['P-Value'][0] < alpha:
         status = "significant"
         if conversion_rates[0] < conversion_rates[1]:
-            conclusions.append({"text": f"The treatment group (B) showed a {abs_value}% absolute uplift over control group (A). {confidence_level}% of the time, the outcome is due to the changes and not due to random chance. This suggests that group B is the more effective strategy for increasing conversions.", "className": ''})
+            conclusions.append({"text": f"The treatment group (B) showed a {abs_value}% absolute uplift over control group (A). {confidence_level:.2f}% of the time, the outcome is due to the changes and not due to random chance. This suggests that group B is the more effective strategy for increasing conversions.", "className": ''})
         elif conversion_rates[0] > conversion_rates[1]:
-            conclusions.append({"text": f"The treatment group (B) showed a {abs_value}% absolute decrease over control group (A). {confidence_level}% of the time, the outcome is due to the changes and not due to random chance. This suggests that group B is not an effective strategy for increasing conversions.", "className": ''})
+            conclusions.append({"text": f"The treatment group (B) showed a {abs_value}% absolute decrease over control group (A). {confidence_level:.2f}% of the time, the outcome is due to the changes and not due to random chance. This suggests that group B is not an effective strategy for increasing conversions.", "className": ''})
 
     else:
         status = "insignificant"
@@ -429,7 +429,7 @@ def analysis_function(visitors_input, conversions_input, confidence_level: float
 
 # conversion_input = {
 #     "arms": 2,
-#     "data": [{"id": 1, "value": 50}, {"id": 2, "value": 50}],
+#     "data": [{"id": 1, "value": 70}, {"id": 2, "value": 50}],
 # }
 
 
