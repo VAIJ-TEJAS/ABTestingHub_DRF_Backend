@@ -429,7 +429,7 @@ def analysis_function(visitors_input, conversions_input, confidence_level: float
 
 # conversion_input = {
 #     "arms": 2,
-#     "data": [{"id": 1, "value": 70}, {"id": 2, "value": 50}],
+#     "data": [{"id": 1, "value": 200}, {"id": 2, "value": 240}],
 # }
 
 
