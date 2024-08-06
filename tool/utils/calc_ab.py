@@ -288,7 +288,7 @@ def analysis_function(visitors_input, conversions_input, confidence_level: float
     ]
 
     uplifts = [
-        round(diff_in_cr[i] / conversion_rates[0], 2) for i in range(len(diff_in_cr))
+        round(diff_in_cr[i] / (conversion_rates[0] + 10**-27), 2) for i in range(len(diff_in_cr))
     ]
 
     standard_errors = [
