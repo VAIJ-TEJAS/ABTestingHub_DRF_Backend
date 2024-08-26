@@ -35,25 +35,50 @@ from statsmodels.stats.proportion import proportion_effectsize as es
     return int(num // den)
 '''
 
+# def get_sample_size(confidence_level, power, baseline_val, mde, variations, absolute, two_tailed):
+#     alpha = 1-(confidence_level/100)
+#     beta = power/100
+#     if variations > 2:
+#         alpha /= (variations - 1)
+
+#     if two_tailed:
+#         tailed='two-sided'
+#     else:
+#         tailed='larger'
+    
+#     p1 = baseline_val / 100
+
+#     if absolute:
+#         p2 = p1 + (mde / 100)
+#     else:
+#         p2 = p1 + p1 * (mde / 100)
+
+#     return round(zt_ind_solve_power(effect_size=es(prop1=p1, prop2=p2), alpha=alpha, power=beta, alternative=tailed))
+
+
 def get_sample_size(confidence_level, power, baseline_val, mde, variations, absolute, two_tailed):
     alpha = 1-(confidence_level/100)
-    beta = power/100
+    power = power/100
     if variations > 2:
         alpha /= (variations - 1)
 
-    if two_tailed:
-        tailed='two-sided'
-    else:
-        tailed='larger'
-    
+    if two_tailed:  # For a two-tailed test, alpha is split by 2 for either side
+        alpha /= 2
+
+    z_a = stats.norm.ppf(1-alpha)  # z-score of alpha
+    z_b = stats.norm.ppf(power)  # z-score of beta
+
     p1 = baseline_val / 100
 
     if absolute:
         p2 = p1 + (mde / 100)
     else:
         p2 = p1 + p1 * (mde / 100)
+    p=(p1+p2)/2
+    num = (z_a * math.sqrt(2 * p * (1 - p)) + z_b * math.sqrt(p1 * (1 - p1) + p2 * (1 - p2)))**2
+    den = (p2 - p1)**2
 
-    return round(zt_ind_solve_power(effect_size=es(prop1=p1, prop2=p2), alpha=alpha, power=beta, alternative=tailed))
+    return round(num / den,0)
 
 
 def duration(sample_size, arms, daily_visitors, is_equal, allocations):
